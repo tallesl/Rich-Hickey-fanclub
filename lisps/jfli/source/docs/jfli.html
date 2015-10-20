@@ -1,0 +1,620 @@
+<html>
+<head>
+	<link rel="stylesheet" type="text/css" media="screen" href="jfli.css">
+</head>
+	<body>
+	<h1><a href="/" title="Rich Hickey's jfli - a Java Foreign Language Interface for Common Lisp">jfli 
+	- a Java Foreign Language Interface for Common Lisp</a></h1>
+
+	<h5>Copyright (c) Rich Hickey. All rights reserved.</h5>
+
+	<p>
+	The use and distribution terms for this software are covered by the <a href="http://opensource.org/licenses/cpl.php">Common 
+	Public License 1.0</a>, which can be found in the file CPL.TXT at the root of 
+	this distribution. By using this software in any fashion, you are agreeing to be 
+	bound by the terms of this license. You must not remove this notice, or any 
+	other, from this software.
+	</p>
+
+	<h2>Contents</h2>
+
+	<ul>
+		<li>
+			<a href="#intro">Introduction</a>
+		</li>
+		<li>
+			<a href="#download">Download</a>
+		</li>
+		<li>
+			<a href="#setup">Setup and Configuration</a>
+		</li>
+		<li>
+			<a href="#quickstart">Quick Start</a>
+		</li>
+		<li>
+			<a href="#api">API Reference</a>
+			<ul>
+				<li>
+					<a href="#jvmcreation">JVM Creation and Initialization</a>
+				</li>
+				<li>
+					<a href="#wrappergen">Wrapper Generation</a>
+				</li>
+				<li>
+					<a href="#objects">Object Creation</a>
+				</li>
+				<li>
+					<a href="#arrays">Arrays</a>
+				</li>
+				<li>
+					<a href="#proxies">Proxies - Java calling back to Lisp</a>
+				</li>
+				<li>
+					<a href="#utilities">Utilities</a>
+				</li>
+			</ul>
+		</li>
+		<li>
+			<a href="#summary">Summary</a>
+		</li>
+	</ul>
+
+
+	<a name="intro"></a> <h3>Introduction</h3>
+
+	<p>
+	My objective was to provide comprehensive, safe, dynamic and Lisp-y access to 
+	Java and Java libraries as if they were Lisp libraries, for use in Lisp programs, 
+	i.e.  with an emphasis on working in Lisp rather than in Java.
+	</p>
+
+	<p>
+	The approach I took was to embed a JVM instance in the Lisp process using JNI. I 
+	was able to do this using LispWorks' own FLI and no C (or Java! *) code, which 
+	is a tribute to the LW FLI.  On top of the JNI layer (essentially a wrapper 
+	around the entire JNI API), I built this user-level API using Java Reflection. 
+	This first version was built with, and contains code specific to, Xanalys <a
+								 href="http://www.lispworks.com/">LispWorks</a>.
+	</p>
+
+
+	<p>
+	<em>jfli</em> ("jay fly") provides:
+	</p>
+
+	<ul>
+
+		<li>
+			Automatic function generation for constructors, fields and methods, either by 
+			named class, or entire package (sub)trees given a jar file.
+		</li>
+
+		<li>
+			Java -> Lisp package and name mapping with an eye towards lack of surprise, lack 
+			of conflict, and useful editor completion.
+		</li>
+
+		<li>
+			setf-able setter generation for fields as well as for methods that follow the 
+			JavaBeans property protocol.
+		</li>
+
+		<li>
+			Java array creation and aref-like access to Java arrays.
+		</li>
+
+		<li>
+			A 'new' macro that allows for keyword-style field and property initialization.
+		</li>
+
+		<li>
+			Typed references to Java objects with an inheritance hierarchy on the Lisp side 
+			mirroring that on the Java side - allowing for Lisp methods specialized on Java 
+			class and interface types.
+		</li>
+
+		<li>
+			Implementation of arbitrary Java interfaces in Lisp, and callbacks from Java to 
+			Lisp via those interfaces.  (* this required a single 5-line dummy Java proxy 
+			stub, provided with jfli)
+		</li>
+
+		<li>
+			Automatic lifetime maintenance of Lisp-referenced Java objects, boxing/unboxing 
+			of primitive args/returns, string conversions, Java exception handling, overload 
+			resolution etc.
+		</li>
+	</ul>
+
+	<p>
+	I built jfli using LWM and LWW (using Apple's and Sun's JVMs respectively), and 
+	it works fine on both.  Should be a trivial port to other LispWorks, and a 
+	possible port to any Common Lisp with a robust FLI. Should also work with any 
+	JVM with a conformant JNI implementation.
+	</p>
+
+	<a name="download"></a> <h3>Download</h3>
+
+	<p>
+	jfli is hosted on <a href="http://sourceforge.net/projects/jfli/">SourceForge</a>
+	</p>
+
+	<a name="setup"></a> <h3>Setup and Configuration</h3>
+
+	<p>
+	jfli is supplied in 2 Lisp files and an optional Java .jar file.  The first Lisp 
+	file, jni.lisp, defines a low-level API to the Java Native Interface, and is not 
+	documented here. The second, jfli.lisp, depends upon jni.lisp, and provides the 
+	user API documented here. Simply compile and load jni.lisp, then compile and 
+	load jfli.lisp. <code>(use-package :jfli)</code> and you are ready to use the 
+	API. Note that prior to creating the JVM you must tell the library how to find 
+	the Java JNI library by setting <a
+								  href="#jnilibpath"><code>*jni-lib-path*</code></a>.
+	</p>
+	<p>
+	If you wish to allow for callbacks from Java to Lisp, you must place jfli.jar in 
+	your classpath when <a href="#jvmcreation">creating the JVM</a>.
+	</p>
+
+
+	<a name="quickstart"></a> <h3>Quick Start</h3>
+	<p>
+	This sample session presumes you have already compiled jni.lisp and jfli.lisp into fasl files.
+	</p>
+	<pre>
+CL-USER 4 > (load "/lisp/jni")
+; Loading fasl file C:\lisp\jni.fsl
+#P"C:/lisp/jni.fsl"
+
+CL-USER 5 > (load "/lisp/jfli")
+; Loading fasl file C:\lisp\jfli.fsl
+#P"C:/lisp/jfli.fsl"
+
+;The user API is entirely in the jfli package
+CL-USER 6 > (use-package :jfli)
+T
+
+;tell the library where Java is located
+CL-USER 7 > (setf *jni-lib-path* "/j2sdk1.4.2_01/jre/bin/client/jvm.dll")
+"/j2sdk1.4.2_01/jre/bin/client/jvm.dll"
+
+;this starts the VM - note how you can set the classpath
+CL-USER 8 > (create-jvm "-Djava.class.path=/lisp/jfli.jar")
+0
+#&lt;Pointer: JNI:PVM = #x081022A0>
+#&lt;Pointer: JNI:PENV = #x0086A858>
+
+;define wrappers for the members of Object
+CL-USER 9 > (def-java-class "java.lang.Object")
+NIL
+
+;and of Properties, a Hashtable-like class
+CL-USER 10 > (def-java-class "java.util.Properties")
+#&lt;STANDARD-CLASS |java.util|:PROPERTIES. 2066B964>
+
+;the above will create these packages if they do not already exist
+;use the packages for easy name access
+
+CL-USER 11 > (use-package "java.lang")
+T
+
+CL-USER 12 > (use-package "java.util")
+T
+
+;create a Properties instance, note keyword-style member inits, string conversion etc
+;also note typed return value
+CL-USER 13 > (setf p (new properties. :getproperty "fred" "ethel"))
+#&lt;PROPERTIES. 20664A94>
+
+;virtual functions work as normal
+CL-USER 14 > (object.tostring p)
+"{fred=ethel}"
+
+;setter was generated for member function because it follows the JavaBeans property protocol
+CL-USER 15 > (setf (properties.getproperty p "ricky") "lucy")
+"lucy"
+
+CL-USER 16 > (object.tostring p)
+"{ricky=lucy, fred=ethel}"
+
+CL-USER 17 > (properties.size p)
+2
+
+;totally dynamic access, create wrappers as you need
+CL-USER 18 > (def-java-class "java.lang.Class")
+#&lt;STANDARD-CLASS CLASS. 20680EC4>
+
+CL-USER 19 > (class.getname (object.getclass p))
+"java.util.Properties"
+
+CL-USER 20 > (def-java-class "java.util.Enumeration")
+#&lt;STANDARD-CLASS ENUMERATION. 20669274>
+
+;no need to wait for the vendor to enhance the language - you use Lisp!
+CL-USER 21 > (defmacro doenum ((e enum) &body body)
+               (let ((genum (gensym)))
+                 `(let ((,genum ,enum))
+                    (do ()
+                        ((not (enumeration.hasmoreelements ,genum)))
+                      (let ((,e (enumeration.nextelement ,genum)))
+                        ,@body)))))
+DOENUM
+
+;can't do this in Java yet
+CL-USER 22 > (doenum (prop (properties.elements p)) (print (object.tostring prop)))
+
+"lucy"
+"ethel"
+NIL
+
+;doc strings are created giving original Java signatures and indicating
+overloads
+CL-USER 23 > (documentation 'properties.getproperty 'function)
+"java.lang.String getProperty(java.lang.String,java.lang.String)
+java.lang.String getProperty(java.lang.String)
+"
+
+CL-USER 24 > (documentation 'properties.new 'function)
+"java.util.Properties()
+java.util.Properties(java.util.Properties)
+"
+	</pre>
+
+	<a name="api"></a> <h2>API Reference</h2>
+
+	<a name="jvmcreation"></a> <h3>JVM Creation and Initialization</h3>
+	<ul>
+
+		<li>
+			<a name="jnilibpath"></a><code>*jni-lib-path*</code>
+			<p>
+			Set this to point to your jvm dll prior to calling create-jvm.
+			</p>
+		</li>
+
+		<li>
+			<strong>Function</strong> <code>(create-jvm &rest option-strings) -> unspecified</code>
+			<p>
+			Creates/starts the JVM. This can only be done once (a Java limitation). <em>You 
+			must call this prior to calling any other jfli function.</em> The option strings 
+			can be used to control the JVM, esp. the classpath:
+			</p>
+			<p>
+			<pre>(create-jvm "-Djava.class.path=/Lisp/jfli.jar")</pre>
+			</p>
+			<p>
+			See the JNI documentation for other initialization options.
+			</p>
+		</li>
+
+		<li>
+			<a name="enableproxies"></a> <strong>Function</strong> <code>(enable-java-proxies) 
+			-> unspecified</code>
+			<p>
+			Sets up the Java->Lisp callback support. Must be called (once) before any calls 
+			to new-proxy, and requires jfli.jar be in the classpath.
+			</p>
+		</li>
+	</ul>
+
+	<a name="wrappergen"></a> <h3>Wrapper Generation</h3>
+
+	<ul>
+		<li>
+			<strong>Macro</strong> <code>(def-java-class full-class-name) -> unspecified</code>
+			<p>
+			Given the package-qualified, case-correct name of a Java class as a string, will 
+			generate wrapper functions for its public constructors, fields and methods.
+			</p>
+			<p>
+			The core API for generation interfaces to Java is the def-java-class macro. This 
+			macro will, at expansion time, use Java reflection to find all of the public 
+			constructors, fields and methods of the given class and generate functions to 
+			access them.
+			</p>
+			<h4>The Generated API</h4> When you e.g. <code>(def-java-class "java.lang.ClassName 
+			 ")</code> you get several symbols/functions:
+			<ul>
+				<li>
+					A package named <code>|java.lang|</code> (note case)<br>
+					from which the following are exported:
+				</li>
+				<li>
+					A class-symbol: <code>classname.</code> (note the dot is part of the name)<br>
+					which can usually be used where a typename is required. It also serves as the 
+					name of the Lisp typed reference class.
+				</li>
+				<li>
+					Every non-interface class with a public constructor will get;
+					<ul>
+						<li>
+							A constructor, <code>(classname.new &rest args) -> typed-reference</code>, which 
+							returns a typed reference to the newly created object
+						</li>
+						<li>
+							A method defined on <a href=#makenew><code>make-new</code></a>, ultimately 
+							calling <code>classname.new</code>, specialized on (the value of) the class-symbol
+						</li>
+					</ul>
+					Note that if the constructor is overloaded, there is just one function generated, 
+					which handles overload resolution. The function documentation string describes 
+					the constructor signature(s) from the Java perspective. The same argument 
+					conversions are performed as are for fields (see below).
+				</li>
+				<li>
+					All public fields will get a getter function:<br>
+					<code>(classname.fieldname [instance]) -> field value</code><br>
+					and a setter:<br>
+					<code>(setf classname.fieldname [instance])</code><br>
+					Instance field wrappers take a first arg which is the instance. Static fields 
+					get a symbol-macro <code>*classname.fieldname*</code>
+					<p>
+					If the type of the field is primitive, the field value will be converted to a 
+					native Lisp value. If it is a Java String, it will be converted to a Lisp string. 
+					Otherwise, a generic reference to the Java object is returned. Similarly, when 
+					setting, Lisp values will be accepted for primitives, Lisp strings for Strings, 
+					or (generic or typed) references for reference types.
+					</p>
+				</li>
+				<li>
+					Every public method will get a wrapper function:<br>
+					<code>(classname.methodname &rest args) -> return-value</code><br>
+					As with constructors, if a method is overloaded a single wrapper is created that 
+					handles overload resolution. If a method follows the JavaBeans property protocol 
+					(i.e. it is called <code>getSomething</code> or <code>isSomething</code> and 
+					there is a corresponding <code>setSomething</code>), then a <code>(setf 
+					classname.methodname)</code> will be defined that calls the latter.
+					<p>
+					The same argument and return value conversions are performed as are for fields. 
+					The function documentation string describes the method signature(s) from the 
+					Java perspective.
+					</p>
+
+				</li>
+				<li>
+					A Lisp class with the class-symbol as its name. It will have as its superclasses 
+					other Lisp classes corresponding to the Java superclass/superinterfaces, some of 
+					which may be forward-referenced-classes.  An instance of this class will be 
+					returned by classname.new/make-new/new, at which point the entire hierarchy will 
+					consist of finalized standard-classes.
+				</li>
+				<li>
+					Note that, due to the need to reference other Java types during the definition 
+					of a class wrapper, symbols, classes, and packages relating to those other types 
+					may also be created. In all cases they will be created with names and 
+					packages as described above.
+				</li>
+			</ul>
+		</li>
+
+		<li>
+			<strong>Function</strong> <code>(get-jar-classnames jar-file-name &rest packages) 
+			-> list-of-strings</code>
+			<p>
+			Returns a list of class name strings. Packages should be strings of the form "java/lang 
+			 " for recursive lookup and "java/util/" (note trailing slash) for non-recursive.
+			</p>
+		</li>
+		<li>
+			<strong>Function</strong> <code>(dump-wrapper-defs-to-file filename classnames)  -> 
+			unspecified</code>
+			<p>
+			Given a list of classnames (say from <code>get-jar-classnames</code>), writes 
+			calls to <code>def-java-class</code> to a file:
+			</p>
+			<pre>
+(dump-wrapper-defs-to-file "/lisp/java-lang.lisp"
+  (get-jar-classnames "/j2sdk1.4.2_01/jre/lib/rt.jar " "java/lang/"))
+(compile-file "/lisp/java-lang")
+(load "/lisp/java-lang")
+(use-package "java.lang")
+;Wrappers for all of java.lang are now available
+</pre>
+		</li>
+	</ul>
+
+	<a name="objects"></a> <h3>Object Creation</h3>
+	<ul>
+		<li>
+			<strong><a name="makenew"></a>Generic Function</strong> <code>(make-new class-symbol 
+			&rest args) -> typed-reference</code>
+			<p>
+			Allows for definition of before/after methods on constructors. Calls <code>classname.new</code>. 
+			The new macro expands into a call to this.
+			</p>
+		</li>
+		<li>
+			<strong>Macro</strong> <code>(new class-spec &rest args) -> typed-reference</code>
+			<br>
+			<p>
+			class-spec -> class-name | (class-name this-name)<br>
+			class-name -> "package.qualified.ClassName" | classname.<br>
+			args -> [actual-arg]* [init-arg-spec]*<br>
+			init-arg-spec -> init-arg | (init-arg)<br>
+			init-arg -> :settable-field-or-method [params]* value (note keyword)<br>
+			| .method-name [args]* (note leading dot)<br>
+			</p>
+
+			<p>
+			Creates a new instance of class-name, by expanding into a call to the make-new 
+			generic function, then initializes it by setting fields or accessors and/or 
+			calling member functions. If this-name is supplied, it will be bound to the 
+			newly-allocated object and available to the init-args:
+			</p>
+			<pre>
+(new (button. this) shell *SWT.CENTER*   ;the actual args
+       :gettext "Call Lisp"               ;a javabean property
+       (.addlistener *swt.selection*      ;a method call
+         (new-proxy (listener.
+                     (handleevent (event)
+                       (declare (ignore event))
+                       (setf (button.gettext this)   ;this is bound to new instance
+                             (format nil "~A ~A"
+                                   (lisp-implementation-type)
+                                   (lisp-implementation-version)))
+                       nil))))
+      .setsize 200 100                    ;can omit parens
+      (.setlocation 40 40))
+			</pre>
+			Expands into:
+			<pre>
+(LET* ((#:G598 (MAKE-NEW BUTTON. SHELL *SWT.CENTER*)) (THIS #:G598))
+  (SETF (BUTTON.GETTEXT #:G598) "Call Lisp")
+  (BUTTON.ADDLISTENER #:G598
+                      *SWT.SELECTION*
+                      (NEW-PROXY (LISTENER.
+                                  (HANDLEEVENT
+                                   (EVENT)
+                                   (DECLARE (IGNORE EVENT))
+                                   (SETF (BUTTON.GETTEXT THIS)
+                                         (FORMAT NIL
+                                                 "~A ~A"
+                                                 (LISP-IMPLEMENTATION-TYPE)
+                                                 (LISP-IMPLEMENTATION-VERSION)))
+                                   NIL))))
+  (BUTTON.SETSIZE #:G598 200 100)
+  (BUTTON.SETLOCATION #:G598 40 40)
+  #:G598)
+			</pre>
+
+		</li>
+	</ul>
+	<a name="arrays"></a> <h3>Array Support</h3>
+	<ul>
+		<li>
+			<strong>Generic Function</strong> <code>(make-new-array type &rest dimensions) -> 
+			reference to new array</code>
+			<p>
+			Generic function with methods defined for all Java class designators:
+			<ul>
+				<li>
+					A "package.qualified.ClassName" string
+				</li>
+				<li>
+					(the value of) A class-symbol - classname.
+				</li>
+				<li>
+					A primitive designator keyword - :boolean|:byte|:char|:double|:float|:int|:long|:short
+				</li>
+			</ul>
+			</p>
+			<p>
+			Creates a Java array of the requested type with the requested dimensions.
+			</p>
+		</li>
+		<li>
+			<strong>Function</strong> <code>(jlength array) -> integer</code>
+			<p>
+			Like length, for Java arrays
+			</p>
+		</li>
+
+		<li>
+			<strong>Function</strong> <code>(jref array &rest subscripts) -> reference</code>
+			<p>
+			Like aref, for Java arrays of non-primitive (reference) types, settable.
+			</p>
+		</li>
+		<li>
+			<strong>Function</strong> <code>(jref-xxx array &rest subscripts) -> value</code>
+			<p>
+			Where xxx = boolean|byte|char|double|float|int|long|short. Like jref, for Java 
+			arrays of primitive types, settable.
+			</p>
+		</li>
+
+	</ul>
+
+	<a name="proxies"></a> <h3>Proxies - Java calling back to Lisp</h3>
+	<ul>
+		<p>
+		Proxies allow the creation of Java objects that implement one or more interfaces 
+		in Lisp, and thus callbacks from Java to Lisp. You must call <a href=#enableproxies>
+		<code>enable-java-proxies</code></a> before using this proxy API. A significant 
+		limitation is that LispWorks appears to not support calls back into Lisp other 
+		than from threads initiated by Lisp, so you must ensure that the proxy will not 
+		be called from an arbitrary Java thread!
+		</p>
+		<li>
+			<strong>Macro</strong> <code>(new-proxy &rest interface-defs) -> reference</code>
+			<p>
+			interface-def -> (interface-name method-defs+)<br>
+			interface-name -> "package.qualified.ClassName" | classname. (must name a Java 
+			interface type)<br>
+			method-def -> (method-name arg-defs* body) <br>
+			arg-def -> arg-name | (arg-name arg-type) arg-type -> "package.qualified.ClassName 
+			 " | classname. | :primitive <br>
+			method-name -> symbol | string (matched case-insensitively)
+			</p>
+
+			<p>
+			Creates, registers and returns a Java object that implements the supplied 
+			interfaces
+			</p>
+		</li>
+		<li>
+			<strong>Function</strong> <code>(unregister-proxy proxy) -> unspecified</code>
+			<p>
+			Stops handling for the proxy (which must have been created by <code>new-proxy</code>) 
+			and removes references from the Lisp side. Make sure it is no longer referenced 
+			from Java first!
+			</p>
+		</li>
+	</ul>
+
+	<a name="utilities"></a> <h3>Utilities</h3>
+	<ul>
+
+		<li>
+			<strong>Function</strong> <code>(jeq obj1 obj2) -> boolean</code>
+			<p>
+			Are the 2 java objects the same object? Note that this is not the same as Object.equals()
+			<p>
+		</li>
+		<li>
+			<strong>Function</strong> <code>(find-java-class class-sym-or-string) -> 
+			reference to Java Class object</code>
+			<p>
+			Given a Java class designator, returns the Java Class object. Use this in 
+			preference to Class.forName() when using jfli.
+			</p>
+		</li>
+
+		<li>
+			<strong>Function</strong> <code>(make-typed-ref java-ref) -> typed-reference</code>
+			<p>
+			Given a generic Java reference, determines the full type of the object and 
+			returns an instance of a typed reference wrapper. classname.new/make-new/new always return typed 
+			references, but since Java methods might return Object or some interface type, 
+			and we don't want to always incur the cost of type determination, field and 
+			method wrapper functions return generic references. Use this function to create 
+			a typed reference corresponding to the full actual type of the object when 
+			desired.
+			</p>
+		 </li>
+		<li>
+			<strong>Function</strong> <code>(box-xxx value) -> reference to Java primitive wrapper class</code>
+			<p>Where xxx = boolean|byte|char|double|float|int|long|short|string. 
+			Given a compatible Lisp value, creates an instance of the corresponding Java primitive wrapper class,
+			e.g. Integer. This should rarely be needed, but can be used to force overloading resolution</p>
+		</li>
+		<li>
+			<strong>Function</strong> <code>(unbox-xxx ref) -> Lisp value</code>
+			<p>Where xxx = boolean|byte|char|double|float|int|long|short|string. 
+			Given an instance of a Java primitive wrapper class, creates an instance of the corresponding 
+			compatible Lisp value. This should rarely be needed, but can be used to unbox values returned by Java
+			Object-based APIs.</p>
+		</li>
+ 	</ul>
+	
+	<a name="summary"></a> <h3>Summary</h3>
+<p>
+I hope you find jfli useful. It is my sincere intent that it enhance the utility and interoperability of Common Lisp,
+a language with which I am still becoming familiar, and grow to appreciate more every day. I welcome comments
+and code contributions.
+</p>
+<p>
+Rich Hickey, July 2004
+</p>
+	</body>
+</html>

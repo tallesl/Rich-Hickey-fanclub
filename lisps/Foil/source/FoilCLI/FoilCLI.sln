@@ -1,0 +1,29 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FoilCLI", "FoilCLI.csproj", "{6D19184B-12E0-450C-AA3F-8DAA3D19596C}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FoilCLISvr", "..\FoilCLISvr\FoilCLISvr.csproj", "{23DFA50E-D2C0-42B4-83AA-18F6B0BEF47A}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{6D19184B-12E0-450C-AA3F-8DAA3D19596C}.Debug.ActiveCfg = Debug|.NET
+		{6D19184B-12E0-450C-AA3F-8DAA3D19596C}.Debug.Build.0 = Debug|.NET
+		{6D19184B-12E0-450C-AA3F-8DAA3D19596C}.Release.ActiveCfg = Release|.NET
+		{6D19184B-12E0-450C-AA3F-8DAA3D19596C}.Release.Build.0 = Release|.NET
+		{23DFA50E-D2C0-42B4-83AA-18F6B0BEF47A}.Debug.ActiveCfg = Debug|.NET
+		{23DFA50E-D2C0-42B4-83AA-18F6B0BEF47A}.Debug.Build.0 = Debug|.NET
+		{23DFA50E-D2C0-42B4-83AA-18F6B0BEF47A}.Release.ActiveCfg = Release|.NET
+		{23DFA50E-D2C0-42B4-83AA-18F6B0BEF47A}.Release.Build.0 = Release|.NET
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal

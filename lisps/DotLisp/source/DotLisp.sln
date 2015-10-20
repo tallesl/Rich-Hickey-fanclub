@@ -1,0 +1,29 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotLisp", "DotLisp.csproj", "{CA411BCB-272F-4417-9168-66DC4C1995BE}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotLispREPL", "DotLispREPL\DotLispREPL.csproj", "{07DF4E94-E617-4453-8E74-95BB1AB5C182}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{CA411BCB-272F-4417-9168-66DC4C1995BE}.Debug.ActiveCfg = Debug|.NET
+		{CA411BCB-272F-4417-9168-66DC4C1995BE}.Debug.Build.0 = Debug|.NET
+		{CA411BCB-272F-4417-9168-66DC4C1995BE}.Release.ActiveCfg = Release|.NET
+		{CA411BCB-272F-4417-9168-66DC4C1995BE}.Release.Build.0 = Release|.NET
+		{07DF4E94-E617-4453-8E74-95BB1AB5C182}.Debug.ActiveCfg = Debug|.NET
+		{07DF4E94-E617-4453-8E74-95BB1AB5C182}.Debug.Build.0 = Debug|.NET
+		{07DF4E94-E617-4453-8E74-95BB1AB5C182}.Release.ActiveCfg = Release|.NET
+		{07DF4E94-E617-4453-8E74-95BB1AB5C182}.Release.Build.0 = Release|.NET
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal

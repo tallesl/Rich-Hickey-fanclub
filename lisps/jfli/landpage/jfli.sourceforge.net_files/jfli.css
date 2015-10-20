@@ -1,0 +1,126 @@
+img {
+  border: 0;
+}
+body {
+  margin: 5px 10% 5px 55px;
+  padding: 5px;
+  border: 0;
+  background: #fff url(jfli_bkgrnd.gif) top left repeat-y;
+  color: #222;
+  font: small/1.6em "Lucida Grande", "Trebuchet MS", "Bitstream Vera Sans", Verdana, Helvetica, sans-serif;
+}
+
+
+a:link {
+  color: #339;
+  text-decoration: none;
+  border-bottom: 2px solid #ccf;
+}
+a:visited {
+  color: #339;
+  text-decoration: none;
+  border-bottom: 2px solid #ddd;
+}
+a:hover {
+  color: #66c;
+  text-decoration: none;
+  border-bottom: 2px solid #ccf;
+}
+a:active {
+  color: #339;
+  text-decoration: none;
+  border-bottom: 2px solid #ccf;
+}
+
+p {
+  margin: 0 0 1em 0;
+  line-height: 140%;
+}
+
+
+h1 {
+  text-indent: -9999px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+	
+h1 a:link, h1 a:visited {
+  display: block;	
+  width: 539px;
+  height: 86px;
+  background: #fff url(jfli_new.gif) top left no-repeat;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  text-decoration: none;
+}
+	
+h1 a:hover {
+  background: #fff url(jfli_new.gif) top left no-repeat;
+  border: 0;
+}
+
+h2 {
+  margin: .75em 0 .25em;
+  font: 170%/1.7em Georgia, serif;
+  color: #66c;
+}
+h3 {
+  margin: 1em 0 .25em;
+  font: 130%/1.4em Georgia, serif;
+  color: #339;
+}
+h4 {
+  margin: 1em 0 .25em;
+  font: 120%/1.3em Georgia, serif;
+  color: #888;
+}
+
+pre, code {
+  color: #404;
+  /*
+  font-family: monaco, "Bitstream Vera Sans Mono", "Courier New", courier, monospace;
+  font-weight: normal;
+  font-size: small;
+  */
+  font: small/1.6em monaco, "Bitstream Vera Sans Mono", "Courier New", courier, monospace;
+  line-height: 1.4em;
+}
+pre {
+  margin: 1em 0 1.4em;
+  margin-left: 3%;
+  width: 77%;
+  border-left: 4px solid #eee;
+  padding: 2px;
+  padding-left: 10px;
+}
+
+ol li {
+  list-style: decimal outside;
+  line-height: 150%;
+  margin: 0 5px 5px 0;
+  padding: 0 0 0 5px;
+}
+
+ul {
+  margin: 3px 0;
+  padding: 0 0 5px 0;
+}
+	
+ul li	{
+  line-height: 150%;
+  margin-bottom: 5px;
+  padding-bottom: 0;
+  padding-left: 18px;
+  padding-top: 2px;
+  margin-left: 5px;
+  list-style: none;
+  background:url("bullet.gif") no-repeat 0px .5em;
+}
+	
+ul ul li {
+  margin-top: 4px;
+  list-style: none;
+  background:url("bullet2.gif") no-repeat 0px .5em;
+}

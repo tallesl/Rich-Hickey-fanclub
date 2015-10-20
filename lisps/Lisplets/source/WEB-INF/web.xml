@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!DOCTYPE web-app 
+    PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" 
+    "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<web-app>
+
+
+    <!-- General description of your web application -->
+
+    <display-name>Lisplets Test</display-name>
+    <description>
+	This is a sample app exercising the lisplet servlet
+    </description>
+
+    <context-param>
+      <param-name>a-context-param</param-name>
+      <param-value>my-context-param</param-value>
+      <description>
+        Sample context param
+      </description>
+    </context-param>
+
+
+    <servlet>
+      <servlet-name>lisplet</servlet-name>
+      <description>
+        This servlet transmits requests and gets replies using s-expressions over a TCP socket.
+        The lisp-host and lisp-port parameters must be supplied
+      </description>
+      <servlet-class>com.richhickey.lisplets.Lisplet</servlet-class>
+        <!-- several init-params (beginning with lisp-) are used to configure the behavior of the servlet
+        The lisp-host and lisp-port parameters must be supplied -->
+      <init-param>
+        <param-name>lisp-host</param-name>
+        <param-value>localhost</param-value>
+      </init-param>
+      <init-param>
+        <param-name>lisp-port</param-name>
+        <param-value>13579</param-value>
+      </init-param>
+        <!-- we want all tags to come across as keywords, so prefix with : (lisp-tag-suffix is also supported) -->
+      <init-param>
+        <param-name>lisp-tag-prefix</param-name>
+        <param-value>:</param-value>
+      </init-param>
+      <!-- only information about the roles listed here will be sent to Lisp 
+      Note that authentication must be used for roles to be available -->
+      <init-param>
+        <param-name>lisp-roles</param-name>
+        <param-value>role1,tomcat,admin</param-value>
+      </init-param>
+      <init-param>
+        <param-name>lisp-create-session</param-name>
+        <param-value>true</param-value>
+      </init-param>
+      <!-- these are the defaults, no need to specify unless you want something else (e.g. for Scheme)
+      <init-param>
+        <param-name>lisp-true</param-name>
+        <param-value>t</param-value>
+      </init-param>
+      <init-param>
+        <param-name>lisp-false</param-name>
+        <param-value>nil</param-value>
+      </init-param>
+      <init-param>
+        <param-name>lisp-null</param-name>
+        <param-value>nil</param-value>
+      </init-param>
+      -->
+      <!-- you can add your own params to send to the Lisp application -->
+      <init-param>
+          <param-name>sample-user-param</param-name>
+          <param-value>a param</param-value>
+      </init-param>
+
+
+      <!-- Load this servlet at server startup time -->
+      <load-on-startup>5</load-on-startup>
+    </servlet>
+
+
+    <!-- what URIs will map to the servlet -->
+    <servlet-mapping>
+      <servlet-name>lisplet</servlet-name>
+      <url-pattern>*.do</url-pattern>
+    </servlet-mapping>
+
+
+    <session-config>
+      <session-timeout>30</session-timeout>    <!-- 30 minutes -->
+    </session-config>
+
+    <!-- sample security stuff, uncomment to enable authentication and roles 
+    <security-constraint>
+      <display-name>Example Security Constraint</display-name>
+      <web-resource-collection>
+         <web-resource-name>Protected Area</web-resource-name>
+         <url-pattern>*.do</url-pattern>
+     <http-method>DELETE</http-method>
+         <http-method>GET</http-method>
+         <http-method>POST</http-method>
+     <http-method>PUT</http-method>
+      </web-resource-collection>
+      <auth-constraint>
+         <role-name>tomcat</role-name>
+        <role-name>role1</role-name>
+        <role-name>admin</role-name>
+      </auth-constraint>
+    </security-constraint>
+
+    <login-config>
+      <auth-method>BASIC</auth-method>
+      <realm-name>Example Basic Authentication Area</realm-name>
+    </login-config>
+
+    <security-role>
+      <role-name>role1</role-name>
+    </security-role>
+    <security-role>
+      <role-name>tomcat</role-name>
+    </security-role>
+    <security-role>
+      <role-name>admin</role-name>
+    </security-role>
+ -->
+
+
+
+</web-app>

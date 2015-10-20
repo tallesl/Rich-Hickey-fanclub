@@ -1,0 +1,8 @@
+/.cvsignore/1.1/Fri Feb 18 15:42:35 2005//Trelease20050227
+/foil-cli-boot.lisp/1.1/Fri Feb 18 15:42:31 2005/-kb/Trelease20050227
+/foil-cli.lisp/1.1/Fri Feb 18 15:42:35 2005/-kb/Trelease20050227
+/foilcli-sys.lisp/1.1/Fri Feb 18 15:42:35 2005/-kb/Trelease20050227
+/gen-cli-wrappers.lisp/1.1/Fri Feb 18 15:42:33 2005/-kb/Trelease20050227
+/load-foil-and-cli-defsys.lisp/1.1/Fri Feb 18 15:42:35 2005/-kb/Trelease20050227
+/test-cli-data.lisp/1.1/Fri Feb 18 15:42:35 2005/-kb/Trelease20050227
+/win-forms-test.lisp/1.5/Sun Feb 27 18:53:40 2005/-kb/Trelease20050227

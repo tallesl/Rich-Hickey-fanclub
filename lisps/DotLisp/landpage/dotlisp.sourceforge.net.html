@@ -1,0 +1,868 @@
+<html><head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<style>
+<!--
+body         { font-size: 10pt }
+-->
+</style>
+<!--mstheme--><link rel="stylesheet" href="dotlisp.sourceforge.net_files/radi1110.css">
+<meta name="Microsoft Theme" content="radius 1110, default">
+</head>
+
+<body>
+<h1>DotLisp - A Lisp dialect for .Net</h1>
+<p>©2003 Rich Hickey, All Rights Reserved</p>
+
+<h2>News</h2>
+
+10/2007 - I've been working on <a href="http://clojure.sourceforge.net/">Clojure</a>,
+ a dynamic programming language, and Lisp, that targets the Java Virtual
+ Machine. It is substantially more sophisticated than DotLisp and I 
+strongly recommend it, unless you must target .Net.
+
+<h2>Objectives</h2>
+<ul>
+  <li>&nbsp;&nbsp;&nbsp; To provide an interactive, Lisp-like language for .Net scripting and development</li>
+  <li>&nbsp;&nbsp;&nbsp; To provide a framework for language experimentation</li>
+  <li>&nbsp;&nbsp;&nbsp; Deep .Net integration, sharing type system, GC and other
+runtime services etc., with transparent access to .Net w/o a FFI or wrappers</li>
+  <li>&nbsp;&nbsp;&nbsp; To have fun</li>
+</ul>
+<h2>Non-Objectives</h2>
+<ul>
+  <li>&nbsp;&nbsp;&nbsp; Compatibility w/Scheme or Common Lisp, e.g. strings are
+    mutable in Scheme and CL, but not in .Net, so not in DotLisp.</li>
+  <li>&nbsp;&nbsp;&nbsp; Speed (although it is quite useable)</li>
+</ul>
+<h2>Caveats</h2>
+<ul>
+  <li>I'm not a Lisp expert. Helpful suggestions are always welcome.</li>
+</ul>
+<h2>Features</h2>
+<ul>
+  <li>&nbsp;&nbsp;&nbsp; Command-line interpreter with Read-Eval-Print Loop</li>
+  <li>&nbsp;&nbsp;&nbsp; Embeddable Interpreter object in a DLL assembly</li>
+  <li>&nbsp;&nbsp;&nbsp; Lexically scoped, Lisp-1</li>
+  <li>&nbsp;&nbsp;&nbsp; &amp;key, &amp;opt and &amp;rest parameters</li>
+  <li>&nbsp;&nbsp;&nbsp; CL-style Macros</li>
+  <li>&nbsp;&nbsp;&nbsp; Generic functions (single and binary dispatch)</li>
+  <li>&nbsp;&nbsp;&nbsp; .Net type system (strings, ints, floats, bools, chars,
+arrays etc are the .Net System types, no conversions/mapping)</li>
+  <li>&nbsp;&nbsp;&nbsp; Transparent access to the .Net framework - simple syntax
+for constructor and method invocation and property access</li>
+</ul>
+<h2>Implementation Notes</h2>
+<ul>
+  <li>&nbsp;&nbsp;&nbsp; Started with Silk (now <a href="http://jscheme.sourceforge.net/">JScheme</a>),
+a Scheme for Java</li>
+  <li>&nbsp;&nbsp;&nbsp; Ported from Java to C#, JVM to .Net CLR</li>
+  <li>&nbsp;&nbsp;&nbsp; Moved away from Scheme compatibility</li>
+  <li>&nbsp;&nbsp;&nbsp; No Silk-based code left</li>
+</ul>
+<h2>Documentation Overview</h2>
+<p>&nbsp;&nbsp;&nbsp; This documentation presumes that you know Scheme or Common
+Lisp, or are willing to learn the fundamentals of Lisp from some other source
+(i.e. <a href="http://www.schemers.org/Documents/#all-texts">Scheme books</a> or
+<a href="http://www.lisp.org/table/books.htm">Common Lisp books</a>). It also
+presumes you have at least the <a href="http://msdn.microsoft.com/net">.Net
+Framework SDK</a> (if not Visual Studio .Net), and will learn about .Net and its
+framework from the help included with same.</p>
+<h2>Obtaining DotLisp</h2>
+<p>&nbsp;&nbsp;&nbsp; DotLisp is now open source, released under the BSD
+license, and hosted as a <a href="http://sourceforge.net/projects/dotlisp">project
+on SourceForge</a>.</p>
+<h2>Philosophy</h2>
+<p>&nbsp;&nbsp;&nbsp; The idea behind DotLisp was to build a Lisp for .Net that
+yielded to the CLR those things provided by the CLR that languages normally have
+to provide themselves: a type system, a memory management system, a library,
+while at the same time retaining the essence of Lisp as a language.</p>
+<hr>
+<h2>Table of Contents</h2>
+<ul>
+  <li><a href="#Invocation">Invocation</a></li>
+  <li><a href="#Syntax">Syntax</a></li>
+  <li>&nbsp;&nbsp;&nbsp; <a href="#Literals">Literals</a></li>
+  <li>&nbsp;&nbsp;&nbsp; <a href="#Conditionals%20and%20Boolean%20Logic">Conditionals
+    and Boolean Logic</a></li>
+  <li>&nbsp;&nbsp;&nbsp; <a href="#Evaluation">Evaluation</a></li>
+  <li>&nbsp;&nbsp;&nbsp; <a href="#Setting%20and%20Places">Setting and Places</a></li>
+  <li>&nbsp;&nbsp;&nbsp; <a href="#Lists">Lists</a></li>
+  <li>&nbsp;&nbsp;&nbsp; <a href="#Arrays">Arrays</a></li>
+  <li>&nbsp;&nbsp;&nbsp; <a href="#Arithmetic">Arithmetic</a></li>
+  <li>&nbsp;&nbsp;&nbsp; <a href="#Iteration%20and%20Enumeration">Iteration and
+    Enumeration</a></li>
+  <li>&nbsp;&nbsp;&nbsp; <a href="#Sequences">Sequences</a></li>
+  <li>&nbsp;&nbsp;&nbsp; <a href="#Macros">Macros</a></li>
+  <li>&nbsp;&nbsp;&nbsp; <a href="#Generic%20Functions">Generic Functions</a></li>
+  <li>&nbsp;&nbsp;&nbsp; <a href="#Printing">Printing</a></li>
+  <li>&nbsp;&nbsp;&nbsp; <a href="#Records">Records</a></li>
+  <li>&nbsp;&nbsp;&nbsp; <a href="#Exceptions%20and%20Debugging">Exceptions and
+    Debugging</a></li>
+  <li><a href="#Embedding%20and%20InterOp">Embedding and InterOp</a></li>
+  <li>&nbsp;&nbsp;&nbsp; <a href="#Delegates">Delegates</a></li>
+  <li>&nbsp;&nbsp;&nbsp; <a href="#DotLisp.Interpreter">DotLisp.Interpreter</a></li>
+  <li>&nbsp;&nbsp;&nbsp; <a href="#DotLisp.Function%20and%20DotLisp.IFunction">DotLisp.Function
+    and DotLisp.IFunction</a></li>
+  <li><a href="#To%20Do:">ToDo</a></li>
+</ul>
+<hr>
+<h2><a name="Invocation">Invocation</a></h2>
+<hr>
+<p>At a command prompt:</p>
+<p>DotLispREPL boot.lisp [other lisp files to load]</p>
+<p>to exit:</p>
+<p>Ctrl-Z, Enter</p>
+<hr>
+<h2><a name="Syntax">Syntax</a></h2>
+<hr>
+<p>&nbsp;&nbsp;&nbsp; A DotLisp program is a sequence of expressions. An
+expression is a literal, or the parenthesized list indicating the application of
+a primitive or other expression to zero or more arguments. The first argument of
+a parenthesized expression is evaluated like any other before being 'applied' to
+the arguments. Many things can be applied to arguments in DotLisp including
+functions, members (both functions and properties), types (as constructors) and
+anything else (as an index to an object with a default indexer).</p>
+<p>&nbsp;&nbsp;&nbsp; DotLisp is case sensitive.</p>
+<p>&nbsp;&nbsp;&nbsp; ; denotes a to-end-of-line comment</p>
+<hr>
+<h2><a name="Literals">Literals</a></h2>
+<hr>
+<pre>    true, false</pre>
+<p>Booleans (System.Boolean)</p>
+<hr>
+<pre>    nil</pre>
+<pre>    ()</pre>
+<p>Nil (equivalent to .Net null reference, and the empty list), matches any type</p>
+<hr>
+<pre>    1, 2, -3</pre>
+<p>Integers (System.Int32)</p>
+<hr>
+<pre>    1.2, 3.e10</pre>
+<p>Floating point (System.Double)</p>
+<hr>
+<pre>    "a string"</pre>
+<p>Strings (System.String). Strings can span multiple lines, whitespace is
+preserved.</p>
+<hr>
+<p>&nbsp;&nbsp;&nbsp; <font color="#FF0000">There is no character literal yet,
+suggestions?</font></p>
+<p>Characters</p>
+<hr>
+<pre>    'fred</pre>
+<p>Symbols (DotLisp.Symbol)</p>
+<pre>    '*varname</pre>
+<p>Dynamic vars must have prefix *</p>
+<pre>    :a-keyword-symbol</pre>
+<p>Keywords symbols are prefixed with : and evaluate to themselves</p>
+<hr>
+<pre>    '(a b c)</pre>
+<p>Lists (DotLisp.Cons)</p>
+<hr>
+<pre>    [1 2 3]    ;Int32[] </pre>
+<pre>    ['a 'b 12] ;Object[]</pre>
+<p>Arrays (if homogeneous args, will be array of common type, else Object[])</p>
+<p><font color="#008000">note: arrays are not true literals, merely
+shorthand for (vector ...)</font></p>
+<hr>
+<pre>    Int32.</pre>
+<pre>    Hashtable.</pre>
+<p>Types (the framework name followed by a dot). Funcallable, act as
+constructors:</p>
+<pre>    (Hashtable. 1000)    ;yields a new Hashtable with initial capacity of 1000</pre>
+<hr>
+<pre>&nbsp;&nbsp;&nbsp; .foo		;instance member - can be field, property or function</pre>
+<pre>    (set (.foo x) 5) or (.foo x 5)	;==&gt; x.foo = 5 in C#</pre>
+<pre>&nbsp;&nbsp;&nbsp; Console:WriteLine	;static member - type:member - field, property or function</pre>
+<pre>    (Console:WriteLine "Hello World")	;invocation</pre>
+<p>Instance members (the member name preceded by a dot). Funcallable. Fields,
+properties and instance member function are all generalized to be functions on
+the target object. If the member function takes arguments, they follow the
+target object:</p>
+<pre>    (.foo x 1 2 3)</pre>
+<p>There is some syntactic sugar for instance member access - x.foo is transformed
+(at read time) to (.foo x) in all cases except when in first position of form,
+where it is translated to .foo x (no parens). This lets you do all of the
+expected things with no more parens than C# (just in different places):</p>
+<pre>    (prn x.y)    ;=&gt; (prn (.y x)) - access a member, no parens required</pre>
+<pre>    x.foo        ;=&gt; (.foo x) - no arg function call - no parens!</pre>
+<pre>    (x.foo 1 2 3)    ;=&gt; (.foo x 1 2 3) - function call with args</pre>
+<p>In addition, explicit qualification of members is supported when needed using
+.type:member -</p>
+<pre>    (.IEnumerable:GetEnumerator obj)</pre>
+<p>This is occasionally required when a type provides only an explicit
+implementation of an inherited interface function.</p>
+<hr>
+<pre>    _    ;underscore</pre>
+<p>Shorthand for System.Reflection.Missing.Value</p>
+<hr>
+<pre>    $, $$, $$$</pre>
+<p>The last, next-to-last, and next-next-to-last values evaluated</p>
+<hr>
+<pre>    !</pre>
+<p>The last exception thrown (only the message is reported at
+the interactive prompt when the exception is thrown, other aspects of the error
+can be determined by evaluating ! or its members).</p>
+<hr>
+<p>&nbsp;&nbsp;&nbsp; interpreter</p>
+<p>The current interpreter. (DotLisp.Interpreter)</p>
+<hr>
+<h2><a name="Conditionals and Boolean Logic">Conditionals and Boolean Logic</a></h2>
+<hr>
+<pre>    (eql? x y)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: Equality - returns true if x and y are the same
+object, or are .Net value types and x.Equals(y), else false</p>
+<hr>
+<pre>    (eqv? x y)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: Equivalence - returns x.Equals(y)</p>
+<hr>
+<pre>    (if testexpr thenexpr [elseexpr])</pre>
+<p>&nbsp;&nbsp;&nbsp; Primitive: if testexpr is true, yields thenexpr and does
+not evaluate elseexpr, else returns elseepxr. If elseexpr is omitted it defaults
+to nil. <font color="#008000">Note: DotLisp has a generalized notion of truth
+where nil and false are conditional false and everything else is conditional
+true.</font></p>
+<hr>
+<pre>    (when testexpr thenexpr)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: same as (if textexpr thenexpr)</p>
+<hr>
+<pre>    (not x)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: returns false if x is conditional true, else
+true</p>
+<hr>
+<pre>    (when-not testexpr thenexpr)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: same as (when (not textexpr) thenexpr)</p>
+<hr>
+<pre>    (cond testexpr1 thenexpr1</pre>
+<pre>            ...</pre>
+<pre>            testexprN thenexprN</pre>
+<pre>            [:else elseexpr])</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: evaluates the testexprs in order and returns the
+corresponding thenexpr as soon as one is conditional true. If no testexpr is
+true and else clause is present, returns elseexpr, otherwise returns nil. <font color="#008000">Note:
+fewer parens than Common Lisp because thenexprs are not in implicit progns
+(blocks).</font></p>
+<hr>
+<pre>    (case testexpr </pre>
+<pre>	(keya1 ... keyaN)	thenexpra</pre>
+<pre>            ...</pre>
+<pre>	(keyn1 ... keynN) 	thenexprN</pre>
+<pre>            [:else elseexpr])</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: compares the testexpr to <i><u> unevaluated</u></i> keys with eql?
+and returns the corresponding thenexpr as soon as one is eql?. If no key is eql?
+and else clause is present, returns elseexpr, otherwise returns nil. <font color="#008000">Note:
+fewer parens than Common Lisp because thenexprs are not in implicit progns
+(blocks)</font></p>
+<hr>
+<pre>    (and arg1 ... argN)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: evaluates args in order, returning nil as soon as
+one is conditional false, else returns argN.</p>
+<hr>
+<pre>    (or arg1 ... argN)</pre>
+<p>&nbsp;&nbsp;&nbsp; Primitive: evaluates args in order, returning first that
+is conditional true, else returns nil.</p>
+<hr>
+<pre>    (nand x y)</pre>
+<pre>    (xor x y)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macros that do what you expect</p>
+<hr>
+<pre>    (nil? x)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: returns true if x is nil, else false</p>
+<hr>
+<pre>    (to-bool x)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: converts DotLisp conditional truth values to
+Boolean true or false, i.e. to-bool nil or false -&gt; false, to-bool anything
+else -&gt; true</p>
+<hr>
+<pre>    (missing? x)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: return true is x is System.Reflection.Missing.Value (_)</p>
+<hr>
+<h2><a name="Evaluation">Evaluation</a></h2>
+<hr>
+<pre>    (quote x)</pre>
+<pre>    'x</pre>
+<p>&nbsp;&nbsp;&nbsp; Primitive: returns x un-evaluated</p>
+<hr>
+<pre>    (type-of x)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: returns corresponding Type object</p>
+<hr>
+<pre>    (is? x atype)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: returns true if x is instance of atype</p>
+<hr>
+<pre>    (def x expr)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: creates a top-level variable bound to x with
+initial value of expr</p>
+<hr>
+<pre>    (block exprs)</pre>
+<p>&nbsp;&nbsp;&nbsp; Primitive: evaluates exprs in order and returns the value
+of the last</p>
+<hr>
+<pre>    (fn ([params]) exprs)</pre>
+<p>&nbsp;&nbsp; &nbsp; Macro: creates an anonymous function object that when
+invoked, evaluates the exprs in an implicit block with the params bound to the
+actual arguments</p>
+<p>&nbsp;&nbsp;&nbsp; Params can contain optional parameters (&amp;opt), keyword
+parameters (&amp;key) and rest parameters (&amp;rest). Pretty much like Common
+Lisp lambda except no supplied-p-parameters. &amp;opt and &amp;key params without defaults
+get assigned System.Reflection.Missing.Value (_, testable with missing?)&nbsp;.
+&amp;opt and &amp;key parameters with defaults will get the defaults when no
+args is supplied, as well as when _ (Missing.Value) is supplied:</p>
+<pre>    &gt;(def (foo &amp;opt (x true)) x)
+    &gt;(foo)
+    true
+    &gt;(foo _)
+    true
+    &gt;(foo false)
+    false
+    &gt;(def (bar &amp;opt x) (foo x))
+    &gt;(bar)
+    true
+    &gt;(bar false)
+    false</pre>
+<hr>
+<pre>    (def (f [params]) exprs)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: creates a top-level variable f bound to a function.
+Same as </p>
+<pre>&nbsp;&nbsp;&nbsp; (def f (fn (params) exprs))</pre>
+<hr>
+<pre>    (let (var1 initexpr1 ... varN initexprN)</pre>
+<pre>        exprs)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: evaluates exprs in an implicit block, with each var<sub>i</sub>
+bound to the corresponding initexpr<sub>i</sub>, returning the value of the
+last.&nbsp; Same as</p>
+<pre>&nbsp;&nbsp;&nbsp; ((fn (vars) exprs) initexprs)</pre>
+<p><font color="#6699CC">&nbsp;&nbsp;&nbsp; </font><font color="#008000">Note fewer parens than Common Lisp
+since no single vars default bound to nil</font></p>
+<hr>
+<pre>    (lets (var1 initexpr1 ... varN initexprN)</pre>
+<pre>        exprs)</pre>
+<p>    &nbsp;&nbsp;&nbsp; Macro: Let sequential - Like let, but vars are updated sequentially</p>
+<hr>
+<pre>    (letfn ((f1 [params]) body1 ... (fN [params]) bodyN)</pre>
+<pre>        exprs)</pre>
+<p>    &nbsp;&nbsp;&nbsp; Macro: Let function(s) - Like let, but with each f<sub>i</sub>
+bound to a fn with body<sub>i</sub>. Body definitions can
+be recursive, referring to themselves or each other:</p>
+<pre>(letfn (	(foo x) </pre>
+<pre>            	(when (&gt; x 0) (prn x) (bar (- x 1)))</pre>
+<pre>	(bar x)</pre>
+<pre>		(foo x))</pre>
+<pre>    (foo 2))</pre>
+<hr>
+<pre>    (dynamic-let (*var1 initexpr1 ... *varN initexprN)</pre>
+<pre>        exprs)</pre>
+<p>    &nbsp;&nbsp;&nbsp; Macro: Dynamic-let, like let but for dynamic variables,
+original values are restored after exprs block completes</p>
+<hr>
+<pre>    (eval astring)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: reads the string and evaluates it</p>
+<hr>
+<pre>    (apply f arg1 ... seq)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: The last arg must support get-enum. Applies f
+to arg1 through argN-1 followed by the set yielded by enumerating seq.</p>
+<hr>
+<pre>    (load afilename)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: loads the file and evaluates the expressions
+contained therein as if entered at top-level.</p>
+<hr>
+<pre>    (load-assembly name)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: loads the specified assembly and makes names and
+types accessible to the program.</p>
+<pre>    (load-assembly-from filename)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: loads the specified assembly file and makes names and
+types accessible to the program.</p>
+<hr>
+<h2><a name="Setting and Places">Setting and Places</a></h2>
+<hr>
+<pre>    (set place1 val1 ... placeN valN)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: sets each place to its corresponding val in
+sequence, returning valN</p>
+<hr>
+<pre>    (parallel-set place1 val1 ... placeN valN)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: sets each place to its corresponding val in
+parallel, returning valN</p>
+<hr>
+<pre>    (shift-set place1 ... placeN)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: each place takes on the value of the subsequent
+place, and placeN keeps its value</p>
+<hr>
+<pre>    (rotate-set place1 ... placeN)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: each place takes on the value of the subsequent
+place, and placeN gets the value of place1</p>
+<hr>
+<pre>    (def-setter placefn setfn)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: associates setfn as the setter of placefn, such
+that calls of the form</p>
+<p>&nbsp;&nbsp;&nbsp; (set (placefn args) val) are transformed into (setfn args
+val)</p>
+<p>&nbsp;&nbsp;&nbsp; Allowing you to say (set (first x) val) instead of
+(set-first x val)</p>
+<hr>
+<h2><a name="Lists">Lists</a></h2>
+<hr>
+<pre>    (cons x y)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: creates a new Cons object with a first of x and
+a rest of y. <font color="#008000">Note: Cons objects in DotLisp are not
+arbitrary pairs, i.e. the rest must be another Cons object or nil. Therefore all
+lists are 'proper'. </font>Conses implement IEnumerable.</p>
+<hr>
+<pre>    cons?, atom?, list?, first, rest, second, third, fourth, nth, len </pre>
+<p>&nbsp;&nbsp;&nbsp; Functions: all take a list and do what you would expect.</p>
+<hr>
+<pre>&nbsp;&nbsp;&nbsp; (set-first lst val)</pre>
+<pre>&nbsp;&nbsp;&nbsp; (set-rest lst cons-or-nil)</pre>
+<pre>&nbsp;&nbsp;&nbsp; (nth-rest lst n)</pre>
+<pre>    (reverse lst)</pre>
+<p>&nbsp;&nbsp;&nbsp; Functions: Do what you would expect</p>
+<hr>
+<pre>    (reverse! lst)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: destructively reverses lst, minimizing consing</p>
+<hr>
+<pre>    (append list1 list2)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: returns a new list of the items in list1 followed by the
+items in list2. May share structure with list2</p>
+<hr>
+<pre>    (concat! list1 list2)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: destructively concatenates list1 and list2, minimizing
+consing</p>
+<hr>
+<pre>    (last lst &amp;opt (n 1))</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: returns tail containing last n elements of lst</p>
+<hr>
+<pre>    (butlast lst &amp;opt (n 1))</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: returns list containing all but last n elements</p>
+<hr>
+<pre><font size="1">    (mapcat! f &amp;rest lists)</font></pre>
+<p>&nbsp;&nbsp;&nbsp; Function: Similar to CL mapcan</p>
+<hr>
+<pre>    (member obj lst &amp;key (test eql?))</pre>
+<pre>    (member-if pred lst)</pre>
+<p>&nbsp;&nbsp;&nbsp; Functions: Return tail beginning with found element or nil
+if not found</p>
+<hr>
+<pre>    (push! val cons-place)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: sets cons-place to (cons val cons-place)</p>
+<pre>    (pop! cons-place)</pre>
+<pre>    (next! cons-place)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macros: set cons-place to (rest cons-place)</p>
+<hr>
+<h2><a name="Arrays">Arrays</a></h2>
+<hr>
+<pre>    (vector arg1 ... argN)</pre>
+<pre>    [arg1 ... argN]</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: makes a one-dimensional array with args as initial
+elements. If all args are of same type, than array is of that type, otherwise an
+array of Object.</p>
+<hr>
+<pre>    (vector-of type arg1 ... argN)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: makes a one-dimensional array of type</p>
+<p>&nbsp;&nbsp;&nbsp; <font color="#008000">Note these are just sugar, you can
+do these same things and more through the Array type.</font></p>
+<hr>
+<pre>    (n anarray)</pre>
+<p>&nbsp;&nbsp;&nbsp; Returns the nth element in the array.</p>
+<pre>    (n array val)</pre>
+<p>&nbsp;&nbsp;&nbsp; Sets the nth element of the array to val and returns val</p>
+<p><font color="#008000">&nbsp;&nbsp;&nbsp; Note the above 2 array operations
+are just instances of the general indexing capability. Any non-function,
+non-type, non-member in the first position in an expression will be 'applied' to
+the first argument if it supports a default indexer, and if a second argument is
+supplied it will be treated as a set operation. So:</font></p>
+<pre>&nbsp;&nbsp;&nbsp; (1 "fred") -&gt; r</pre>
+<pre>&nbsp;&nbsp;&nbsp; ("fred" ahashtable "ethel")    ;set fred key to ethel value</pre>
+<pre>&nbsp;&nbsp;&nbsp; ("fred" ahashtable) -&gt; "ethel"    ;access it</pre>
+<hr>
+<h2><a name="Arithmetic">Arithmetic</a></h2>
+<hr>
+<pre>    +, -, *,  /, min, max</pre>
+<p>&nbsp;&nbsp;&nbsp; Functions: multi-argument arithmetic.</p>
+<hr>
+<pre>    +=, -=, *=, /=, ++, --</pre>
+<pre>    (+= x n) -&gt; <font size="1">(set x (add x n))</font></pre>
+<p>&nbsp;&nbsp;&nbsp; Macros: calc and set, ++ and -- add/subtract 1</p>
+<hr>
+<pre>    &lt;, &lt;=, &gt;, &gt;=, ==, !=</pre>
+<p>&nbsp;&nbsp;&nbsp; Functions: comparisons</p>
+<hr>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;</p>
+<pre>   (add x y), (subtract x y), (multiply x y), (divide x y), (compare x y)</pre>
+<p>&nbsp;&nbsp;&nbsp; Generic BinOps: upon which arithmetic ops are built.
+Extend by defining new BinOp methods. compare returns an Int32 with the same
+semantics as IComparer.Compare.</p>
+<hr>
+<pre>    (bit-and x y), (bit-or x y), (bit-xor x y)</pre>
+<p>&nbsp;&nbsp;&nbsp; Generic BinOps: bitwise ops. Methods defined for integer
+types and enums.</p>
+<pre>    (bit-not x)</pre>
+<p>&nbsp;&nbsp;&nbsp; Generic function: bitwise not. Methods defined for integer
+types and enums.</p>
+<hr>
+<pre>     even?, odd?, zero?, positive?, negative?</pre>
+<p>&nbsp;&nbsp;&nbsp; Functions:&nbsp; test what they imply</p>
+<hr>
+<h2><a name="Iteration and Enumeration">Iteration and Enumeration</a></h2>
+<hr>
+<pre>    (while test exprs)</pre>
+<p>&nbsp;&nbsp;&nbsp; Primitive: While test is true, evaluates exprs, returns
+nil</p>
+<hr>
+<pre>    (until test exprs)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: While test is non-true, evaluates exprs, returns
+nil</p>
+<hr>
+<pre>    (for inits test update &amp;rest body)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: roughly, (lets inits (while test (block body
+update))), returns nil</p>
+<hr>
+<pre>    (dolist var lst &amp;rest body)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: evaluates body with var bound to successive
+elements of lst</p>
+<hr>
+<pre>    (dotails var lst &amp;rest body)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: evaluates body with var bound to successive tails
+of lst</p>
+<hr>
+<pre>    (for-each var seq &amp;rest body)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: seq must support get-enum. Evaluates body with var
+bound to successive elements of seq</p>
+<hr>
+<h2><a name="Sequences">Sequences</a></h2>
+<p>&nbsp;&nbsp;&nbsp; DotLisp supports a generalized notion of sequence and
+several functions that take and yield sequences. A sequence is any object for
+whom the get-enum generic function is defined.&nbsp;</p>
+<hr>
+<pre>    (get-enum x)</pre>
+<p>&nbsp;&nbsp;&nbsp; Generic function: Returns an IEnumerator over x. Methods
+are predefined for IEnumerator and IEnumerable, so all of the sequence functions
+work with .Net collections.</p>
+<hr>
+<pre>    (make-enum inits get &amp;rest move)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: creates a lazy IEnumerator object based upon&nbsp;
+supplied code. inits are bound as by lets, get is evaluated to define
+IEnumerator.Current(), and the expressions of move are in an implicit block, the
+last of which must yield a boolean which will be the return value of
+IEnumerator.MoveNext() For example, range is defined as follows:</p>
+<pre>    (def (range start end &amp;opt (step 1))
+        (make-enum
+            (x start curr start)
+            curr
+            (set curr x)
+            (+= x step)
+            (&lt; curr end)))</pre>
+<p>&nbsp;&nbsp;&nbsp; filter, map, concat and others are defined using make-enum.
+<font color="#008000">N.B. no Reset() support or off-the-ends protection.</font></p>
+<hr>
+<pre>    (map-&gt;list &amp;rest seqs)</pre>
+<p>&nbsp;&nbsp;&nbsp; Like CL mapcar except args can be sequences and not just
+lists. Differs from most of the following sequence functions in returning a list
+rather than another (lazy) sequence.</p>
+<hr>
+<pre>    (map1 f seq)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function:&nbsp; yields a lazy sequence that is the result
+of calling&nbsp; f for each element in seq.</p>
+<hr>
+<pre>    (map f &amp;rest seqs)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: f must be a function that takes as many args as
+there are seqs. Yields a lazy sequence that is the result of calling f with the
+first element from each seq, then the second etc. Stops when the end of the
+shortest seq is reached.&nbsp;&nbsp;&nbsp;</p>
+<hr>
+<pre>    (filter pred seq)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: returns a lazy sequence&nbsp; that containing
+those values in seq for which pred returns true</p>
+<hr>
+<pre>    (find val seq &amp;key (test eqv?))</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: returns a lazy sequence of those items in seq
+for which (test item val) returns true.</p>
+<hr>
+<pre>    (concat &amp;rest seqs)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: returns a lazy sequence which is a concatenation
+of the items in seqs.</p>
+<hr>
+<pre>    (reduce f seq &amp;key init)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: If seq is empty, returns init if supplied, else
+the result of calling f with no args. For some non-empty seq comprised of a b c,
+if init is supplied the result is equivalent to:</p>
+<pre>        (f (f (f init a) b) c)</pre>
+<p>&nbsp;&nbsp;&nbsp; if init is missing, result is equivalent to:</p>
+<pre>        (f (f a b) c)</pre>
+<hr>
+<pre>    (any pred &amp;rest seqs)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: pred must take as many args as there are seqs.
+Calls pred with the first element from each seq, then the second etc and returns
+the first true value returned, else stops when the end of the shortest seq is
+reached and returns false .&nbsp;</p>
+<hr>
+<pre>    (every pred &amp;rest seqs)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: pred must take as many args as there are seqs.
+Calls pred with the first element from each seq, then the second etc and returns
+the first false value returned, else stops when the end of the shortest seq is
+reached and returns the last value returned by pred.&nbsp;</p>
+<hr>
+<pre>    (into coll seq)</pre>
+<p>&nbsp;&nbsp;&nbsp; Generic function: Dumps seq into the collection coll by
+means equivalent to append (i.e. the collection will contain the seq in order if
+the collection has a notion of order). Methods are predefined for IList, Cons
+and nil, the last of which will cons up a new list:</p>
+<pre>    (into nil [1 2 3]) -&gt; (1 2 3)</pre>
+<p>&nbsp;&nbsp;&nbsp; The general idiom being the use of sequence functions to dump
+into your choice of existing or new collection:</p>
+<pre>    (into (ArrayList.) (map .ToString [1 2 3])) ;puts "1", "2", "3" into new ArrayList</pre>
+<p>&nbsp;&nbsp;&nbsp; Note that you can map any funcallable thing, including
+member functions, properties, types (constructors) and indexes.</p>
+<hr>
+<h2><a name="Macros">Macros</a></h2>
+<p>&nbsp;&nbsp;&nbsp; backquote (`), unquote (~) and unquote-splicing (~@) operators are
+all supported. <font color="#008000">Note: use of tilde rather than comma for
+unquote because comma will be needed for multi-dimensional array type names
+(which are not yet implemented)</font></p>
+<hr>
+<pre>    (def-macro (m [params-pattern]) exprs)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: Defines a macro named m. Destructuring is supported
+for the params pattern as long as it does not contain &amp;key or %opt args,
+i.e. params patterns can contain nested list structure including &amp;rest
+params, or &amp;key and &amp;opt params, but not both.</p>
+<hr>
+<pre>    (macroexpand-1 pattern)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: returns the result of expansion on the pattern</p>
+<hr>
+<pre>    (gensym)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: generates a new, unique symbol</p>
+<hr>
+<h2><a name="Generic Functions">Generic Functions</a></h2>
+<p>&nbsp;&nbsp;&nbsp; DotLisp supports generic functions of arbitrary arglists
+that dispatch on the type or value of the first arg, and generic binary
+operators of exactly 2 args that dispatch on both argument types (but not on
+values).</p>
+<hr>
+<pre>    (def-method (gfname (p1 dispatch-type-or-value) &amp;rest params) &amp;rest body)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: defines a new method for the generic function
+gfname that will be operable for calls where the first argument is of the
+(best-matching) type dispatch-type-or-value if it is a Type, or its value
+otherwise. &amp;opt, &amp;key and &amp;rest params are supported in the argument
+list. No effort is made to ensure that different methods for the same generic
+function have conforming signatures.&nbsp;</p>
+<p> Within the body, the function
+(call-base-method) is available (for type-dispatching methods only), and when called
+with no args will invoke the method that would match the base class/interface of p1.
+If there are methods defined on more than one base, the one chosen is
+undefined.&nbsp;</p>
+<hr>
+<pre>    (def-binop (gbname (p1 dispatch1) (p2 dispatch2)) &amp;rest body)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: defines a new method for the generic binop gbname.
+Generic binops match only on types, not values. Binops do a best-match on p1
+followed by a best match on p2.</p>
+<hr>
+<h2><a name="Printing">Printing</a></h2>
+<hr>
+<pre>    (str x)</pre>
+<p>&nbsp;&nbsp;&nbsp; Generic Function: returns a str representation of x for
+printing. Methods are defined for Object (using .ToString), nil, true, false,
+String, ICollection, Cons etc. <font color="#008000">No effort is made for
+round-tripping values via print and read.</font></p>
+<hr>
+<pre>    (pr &amp;rest xs)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: for each x in xs, prints each (str x) to
+*pr-writer using .Write, with the separator *pr-sep</p>
+<pre>    (prn &amp;rest xs)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: same as (pr xs) followed by a newline</p>
+<pre>    (prs &amp;rest xs)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: for each x in xs, prints each x to *pr-writer using .Write,
+with the separator *pr-sep</p>
+<pre>    (prns &amp;rest xs)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: same as (prs xs) followed by a newline</p>
+<hr>
+<h2><a name="Records">Records</a></h2>
+<hr>
+<pre>    (def-record type &amp;rest fields)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: type can be a single symbol or (NewType
+BaseType.), where BaseType is also a record type. Note that the new type symbol
+is not followed by the dot(.) because the type dpes not yet exist. After calling
+defrecord you can refer to NewType. with the dot like any other type. If no base is supplied, the
+base is DotLisp.Record. Fields can be single symbols or parenthesized
+symbol/default-value pairs as per &amp;keys args. The type is created along with
+code to support make-record (which must be used rather than the typical
+constructor call in order to create an initialized record object).</p>
+<hr>
+<pre>    (make-record type &amp;rest args)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: creates an instance of the type, which must have
+been dreated with def-record, and a set of key/value pairs corresponding to some
+or all of the members of type or its bases class(es). Any members for which no
+values are supplied will be initialized to their defaults (if supplied to
+def-record) or else _ (.Missing.Value).</p>
+<hr>
+<pre>    &gt; (def-record NewRec (x 1) (y 2) z)</pre>
+<pre>    NewRec.</pre>
+<pre>    &gt; (def rec (make-record NewRec. :x 5))</pre>
+<pre>    {NewRec. {"x" 5} {"y" 2} {"z" _}}</pre>
+<p>&nbsp;&nbsp;&nbsp; Fields of records can be accessed using the member syntax:</p>
+<pre>    &gt; (.x rec)    ;access x member, rec.x ok too</pre>
+<pre>    5</pre>
+<pre>    &gt; (.x rec 10)    ;set x member</pre>
+<pre>    &gt; rec</pre>
+<pre>    {NewRec. {"x" 10} {"y" 2} {"z" _}}</pre>
+<p>&nbsp;&nbsp;&nbsp; In addition, record types are expando - i.e. new members
+can be introduced via set:</p>
+<pre>    &gt; (set rec.w 10)    ;set non-existent w member, ok</pre>
+<pre>    &gt; rec</pre>
+<pre>    {NewRec. {"x" 10} {"y" 2} {"z" _} {"w" 10}}</pre>
+<p>&nbsp;&nbsp;&nbsp; However it is an error to access a non-existent member
+that has not been set:</p>
+<pre>    &gt;rec.b</pre>
+<pre>    !Exception: Record does not contain member: b</pre>
+<p>&nbsp;&nbsp;&nbsp; Derived records add fields to their base:</p>
+<pre>    &gt; (def-record (DerivedRec NewRec.) (ethel "fred") (ricky "lucy"))</pre>
+<pre>    DerivedRec.</pre>
+<pre>    &gt; (make-record DerivedRec.)</pre>
+<pre>    {DerivedRec. {"x" 1} {"y" 2} {"z" _} {"ethel" "fred"} {"ricky" "lucy"}}</pre>
+<p>&nbsp;&nbsp;&nbsp; However only fields declared in the class can be
+initialized in make-record. Base class members will get their defaults (i.e. z
+below cannot be initialized via make-record DerivedRec.):</p>
+<pre>    &gt; (make-record DerivedRec. :z 9 :ethel "merman")</pre>
+<pre>    {DerivedRec. {"x" 1} {"y" 2} {"z" _} {"ethel" "merman"} {"ricky" "lucy"}}</pre>
+<p>&nbsp;&nbsp;&nbsp; To allow base members to be initialized or define new
+defaults, they can be redeclared in the derived record:</p>
+<pre>    &gt; (def-record (DerivedRec NewRec.) (ethel "fred") (ricky "lucy") (z 9)) ;redeclare z</pre>
+<pre>    DerivedRec.</pre>
+<pre>    &gt; (make-record DerivedRec.)</pre>
+<pre>    {DerivedRec. {"x" 1} {"y" 2} {"z" 9} {"ethel" "fred"} {"ricky" "lucy"}}</pre>
+<pre>    &gt; (make-record DerivedRec. :z 11 :ethel "merman")</pre>
+<pre>    {DerivedRec. {"x" 1} {"y" 2} {"z" 11} {"ethel" "merman"} {"ricky" "lucy"}}</pre>
+<p>&nbsp;&nbsp;&nbsp; Record types can be redefined without restarting. To .Net,
+the "members" do not exist as fields or properties, rather, the type
+has a default String indexer through which the member values can be obtained.</p>
+<hr>
+<h2><a name="Exceptions and Debugging">Exceptions and Debugging</a></h2>
+<hr>
+<pre>    (try body &amp;key catch finally (catch-name 'ex))</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: Will execute body in a try block. If an exception
+is thrown and catch is provided, will execute catch expression with the
+catch-name symbol bound to the thrown exception. In all cases, will execute the
+finally expression if provided.</p>
+<hr>
+<pre>    (with-dispose inits &amp;rest body)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: will initialize inits via lets, then evaluate body
+in a try block whose finally clause will call IDisposable:Dispose on any
+non-null vars from inits.</p>
+<hr>
+<pre>    (throw ex)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: throws the Exception ex</p>
+<pre>    (error msg)</pre>
+<p>&nbsp;&nbsp;&nbsp; Function: throws an Exception with the message text msg</p>
+<hr>
+<pre>    (trace &amp;rest fnames)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: will write to System.Diagnostic.Trace whenever
+functions in fnames are called</p>
+<pre>    (untrace &amp;rest fnames)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: cancels tracing for funcs in fnames. If fnames is
+nil, cancels all traces</p>
+<hr>
+<h2><a name="Embedding and InterOp">Embedding and InterOp</a></h2>
+<hr>
+<h2><a name="Delegates">Delegates</a></h2>
+<p>DotLisp supports dynamic creation of delegates bound to closures.</p>
+<hr>
+<pre>    (make-delegate DelegateType. (&amp;rest delegate-args) &amp;rest body)</pre>
+<p>&nbsp;&nbsp;&nbsp; Macro: makes an instance of DelegateType bound to the
+closure body. The number of args and return type (if any) must match the
+delegate:</p>
+<pre>    &gt;(set e (make-delegate EventHandler. (sender e) </pre>
+<pre>		(prn (list sender e))))</pre>
+<pre>    System.EventHandler</pre>
+<pre>    &gt;(e.Invoke "x" EventArgs:Empty)</pre>
+<pre>    ("x" System.EventArgs)</pre>
+<hr>
+<h2><a name="DotLisp.Interpreter">DotLisp.Interpreter</a></h2>
+<p>&nbsp;&nbsp;&nbsp; DotLisp is now packaged as a DLL assembly. Inside the
+assembly the Interpreter class is public. Creating an instance of this class
+gives you a fully independent interpreter, with the following interface:</p>
+<pre>Interpreter()</pre>
+<p>&nbsp;&nbsp;&nbsp; Constructor. Builds an interpreter instance with built-ins
+and primitives loaded into its environment.</p>
+<pre>Boolean Eof(Object o)</pre>
+<p>&nbsp;&nbsp;&nbsp; Returns true if o is the end-of-file object, else false.
+Use this to test the value returned by Read().</p>
+<pre>Object Eval(Object expr)</pre>
+<p>&nbsp;&nbsp;&nbsp; Evaluate expr, where expr is an expression returned from
+Read(). For now, consider the type and structure of expr to be opaque, i.e.
+don't hand something to Eval() that you didn't get from Read().</p>
+<pre>void Intern(String name, Object val)</pre>
+<p>&nbsp;&nbsp;&nbsp; Set the global value of the symbol named name to be val.
+Use this to expose your application-level objects to DotLisp code.</p>
+<pre>void InternType(Type t)</pre>
+<p>&nbsp;&nbsp;&nbsp; Expose the type t to DotLisp code so it can be referenced
+via type literals (i.e. with Typename. )</p>
+<pre>void InternTypesFrom(Assembly a)</pre>
+<p>&nbsp;&nbsp;&nbsp; Interns all the types from a.</p>
+<pre>Object Load(TextReader t)</pre>
+<p>&nbsp;&nbsp;&nbsp; Read and Eval the code from t. Return value TBD.</p>
+<pre>Object LoadFile(String filepath)</pre>
+<p>&nbsp;&nbsp;&nbsp; Loads the code from filepath. Return value TBD.</p>
+<pre>Object Read(TextReader t)</pre>
+<p>&nbsp;&nbsp;&nbsp; Reads the next expression from t. Returns the expression,
+suitable for evaluation by Eval(), or an object for which Eof() will return
+true, indicating end-of-file was reached.</p>
+<pre>String Str(Object o)</pre>
+<p>&nbsp;&nbsp;&nbsp; Returns the String representation of o that would be
+returned by the generic function str in the DotLisp environment.</p>
+<pre>void Trace(DotLisp.Symbol sym)</pre>
+<p>&nbsp;&nbsp;&nbsp; Turn on tracing of calls to sym.</p>
+<pre>void UnTrace(DotLisp.Symbol sym)</pre>
+<p>&nbsp;&nbsp;&nbsp; Turn off tracing of calls to sym.</p>
+<pre>void UnTraceAll()</pre>
+<p>&nbsp;&nbsp;&nbsp; Turn off tracing of all symbols</p>
+<pre>ICollection TraceList{get;}</pre>
+<p>&nbsp;&nbsp;&nbsp; The set of all symbols currently being traced.</p>
+<p>Given this interface, a basic REPL loop looks like this:</p>
+<pre>DotLisp.Interpreter interpreter = new DotLisp.Interpreter();</pre>
+<pre>for(;;)
+    {
+    try{
+        Console.Write("&gt; ");
+        Object r = interpreter.Read(Console.In);
+        if(interpreter.Eof(r))
+            return;
+        Object x = interpreter.Eval(r);
+        Console.WriteLine(interpreter.Str(x));
+         }
+    catch(Exception e)
+        {
+        Console.WriteLine("!Exception: " + e.GetBaseException().Message);
+        }
+    }</pre>
+<hr>
+<h2><a name="DotLisp.Function and DotLisp.IFunction">DotLisp.Function and
+DotLisp.IFunction</a></h2>
+<p>DotLisp exposes the delegate type Function and the interface IFunction to
+allow functions written in other languages can be incorporated into DotLisp. Any
+instance of Function or instance of a class implementing IFunction with be
+funcallable. Just implement in the language of your choice and then Intern them
+with the name you desire. The signatures are:</p>
+<pre>public delegate Object Function(params Object[] args);</pre>
+<pre>public interface IFunction
+    {
+    Object Invoke(params Object[] args);
+    }</pre>
+<p>In addition, closures written in DotLisp implement IFunction and can be
+invoked via that interface.</p>
+<hr>
+<h2><a name="To Do:">To Do:</a></h2>
+<ul>
+  <li>&nbsp;&nbsp;&nbsp; Better debugging and tracing facilities</li>
+  <li>&nbsp;&nbsp;&nbsp; Character literals</li>
+  <li>&nbsp;&nbsp;&nbsp; Finish math primitives</li>
+  <li>&nbsp;&nbsp;&nbsp; Delegate generation</li>
+  <li>&nbsp;&nbsp;&nbsp; Thread support</li>
+  <li>&nbsp;&nbsp;&nbsp; Expose reader extensibility</li>
+  <li>&nbsp;&nbsp;&nbsp; Non-local exit, return/break/continue</li>
+  <li>&nbsp;&nbsp;&nbsp; Some sort of namespace/module system</li>
+  <li>&nbsp;&nbsp;&nbsp; Compiler?</li>
+</ul>
+<a href="http://sourceforge.net/">
+<img src="dotlisp.sourceforge.net_files/sflogo.png" alt="SourceForge.net Logo" height="37" border="0" width="125"></a>
+
+
+
+</body></html>

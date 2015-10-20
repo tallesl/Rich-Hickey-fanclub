@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path=""/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="C:/eclipse/plugins/org.eclipse.swt.win32_3.0.1/ws/win32/swt.jar"/>
+	<classpathentry kind="lib" path="C:/Program Files/Apache Software Foundation/Tomcat 5.0/common/lib/servlet-api.jar"/>
+	<classpathentry kind="lib" path="C:/dev/commons-httpclient-2.0.2/commons-httpclient-2.0.2.jar"/>
+	<classpathentry kind="lib" path="C:/dev/commons-logging-1.0.4/commons-logging.jar"/>
+	<classpathentry kind="output" path=""/>
+</classpath>

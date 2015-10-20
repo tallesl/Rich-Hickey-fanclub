@@ -1,0 +1,1186 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=windows-1252">
+	<link rel="stylesheet" type="text/css" media="screen" href="foil.sourceforge.net_files/foil.css">
+<title>Foil - a Foreign Object Interface for Lisp</title>
+    	<meta name="keywords" content="Rich Hickey, Foil, Lisp, Common Lisp, LispWorks, Java, CLI, CLR, JVM, C#">
+	<meta name="author" content="Rich Hickey">
+    </head>
+<body>
+<h2>Foil - a Foreign Object Interface for Lisp</h2>
+	<h5>Copyright (c) Rich Hickey and Eric Thorsen. All rights reserved.</h5>
+
+	<p>
+	The use and distribution terms for this software are covered by the <a href="http://opensource.org/licenses/cpl.php">Common 
+	Public License 1.0</a>, which can be found in the file CPL.TXT at the root of 
+	this distribution. By using this software in any fashion, you are agreeing to be 
+	bound by the terms of this license. You must not remove this notice, or any 
+	other, from this software.
+	</p>
+
+	<h2>Contents</h2>
+
+	<ul>
+		<li>
+			<a href="#description">Description</a>
+		</li>
+		<li>
+			<a href="#download">Download</a>
+		</li>
+        <li>
+			<a href="#quickstart">Quick Start</a>
+		</li>
+
+		<li>
+			<a href="#api">API Reference</a>
+			<ul>
+				<li>
+					<a href="#fvms">Foreign VMs</a>
+				</li>
+				<li>
+					<a href="#frefs">Foreign References</a>
+				</li>
+				<li>
+					<a href="#wrappergen">Wrapper Generation</a>
+				</li>
+				<li>
+					<a href="#objects">Object Creation</a>
+				</li>
+				<li>
+					<a href="#objectservices">Object Services</a>
+				</li>
+				<li>
+					<a href="#vectors">Vectors</a>
+				</li>
+				<li>
+					<a href="#misc">Miscellaneous</a>
+				</li>
+				<li>
+					<a href="#proxies">Proxies and Callbacks</a>
+				</li>
+				<li>
+					<a href="#marshalling">Marshalling</a>
+				</li>
+			</ul>
+		</li>
+		<li>
+			<a href="#runtimeservers">Runtime Servers</a>
+		</li>
+		<li>
+			<a href="#protocol">Protocol</a>
+		</li>
+		<li>
+			<a href="#summary">Summary</a>
+		</li>
+	</ul>
+
+<a name="description"></a><h2>Description and Rationale</h2>
+
+Foil consists of a protocol and a set of libraries that facilitate 
+access to popular object runtimes, such as the JVM and the CLI/CLR, and 
+their libraries, from Lisp.  A protocol is defined which abstracts out the 
+common features provided by Java-like environments - object construction, 
+method, field, and property access, object lifetime management etc.  The 
+protocol defines a set of features as well as an s-expression based stream 
+format for communication.  Runtime server applications are provided that 
+utilize Java and C# libraries to implement the object runtime side of the 
+protocol for Java and the CLI.  Source for the applications is provided so 
+that custom hosts can be built.  A library for Common Lisp is provided 
+that implements the consumer side of the protocol, and offers seamless 
+access to the foreign objects in a Lisp-like manner.  
+
+The design of Foil owes much to <a href="http://jfli.sourceforge.net/">jfli</a>, an in-process solution to the same 
+problem for Java, and it remains extremely similar in its Lisp interface.  
+Several factors motivated the significant difference in the Foil design -
+its use of an out-of-process instance of the foreign runtime: 
+
+<ul>
+<li>jfli did not see wide porting, due to its use of LispWorks' sophisticated FLI to access JNI, 
+    and the lack of corresponding facilities in some other Lisps</li>
+<li>I found that I needed to access already-running instances of the JVM, 
+    for instance servlet containers, as done in <a href="http://lisplets.sourceforge.net/">Lisplets</a>, and felt
+    I could accomplish similar things with less effort with Foil + marshallers</li>
+<li>I wanted to access the CLR/CLI in a similar fashion to Java</li>
+<li>It allows for more flexibility in dealing with threading issues</li>
+</ul>
+
+The major tradeoff in stream-based access to out-of-proc runtimes is a 
+significant drop in per-call performance.  However, even with jfli, which 
+was very fast, the overhead of reflection per call could be high in 
+certain scenarios, since the APIs of these platforms tend to be very 
+'chatty'.  Foil includes a marshalling system that allows for efficient 
+transfer of large and composite objects with minimal call overhead, in a 
+manner that doesn't pollute the Lisp code on the consumer side.  
+
+<h4>Foil provides all the facilities of jfli and more - </h4>
+
+
+<h5>Features of jfli that are retained/enhanced:</h5>
+
+	<ul>
+
+		<li>
+			Automatic function generation for constructors, fields, methods, and properties either by 
+			named class, or entire package (sub)trees given a jar file or assembly name.
+		</li>
+
+		<li>
+			Java/CLI -&gt; Lisp package and name mapping with an eye towards lack of surprise, lack 
+			of conflict, and useful editor completion.
+		</li>
+
+		<li>
+			setf-able setter generation for fields and properties		</li>
+
+		<li>
+			Java/CLI vector creation and aref-like access to Java/CLI vectors.
+		</li>
+
+		<li>
+			Constructors that allow for keyword-style property initialization.
+		</li>
+
+		<li>
+			Typed references to Java/CLI objects with an inheritance hierarchy on the Lisp side 
+			mirroring that on the Java/CLI side - allowing for Lisp methods specialized on Java/CLI 
+			class and interface types.
+		</li>
+
+		<li>
+			Implementation of arbitrary Java/CLI interfaces in Lisp, and callbacks from Java/CLI to 
+			Lisp via those interfaces. </li>
+
+		<li>
+			Automatic lifetime maintenance of Lisp-referenced Java/CLI objects, boxing/unboxing 
+			of primitive args/returns, string conversions, Java/CLI exception handling, overload 
+			resolution etc.
+		</li>
+	</ul>
+<h5>Some of the additions are:</h5>
+
+<ul> 
+	<li>(Hopefully) Much improved portability (n.b. it has not been ported, but is mostly standard CL)
+	</li><li>Access to the CLR with the same API</li> 
+	<li>Support for CLR and JavaBean properties</li>
+	<li>Simultaneous access to multiple runtimes</li>
+	<li>Simultaneous access to the CLR and Java</li>
+	<li>A marshalling system which can, in a single call, pull across the types, hashcodes, and/or values of 
+reference objects to an arbitrary depth, with user customizable value marshallers.</li> 
+	<li>All references to the same remote object are <code>eq</code> on the Lisp side</li> 
+	<li><code>ensure-typed-ref</code>, which makes a remote reference 
+its most fully derived type in Lisp, works in place, using <code>change-class</code></li> 
+	<li>vector argument boxing, so lightweight vectors-as-arguments can be created in-place 
+		without the overhead of multiple calls to create and initialize the vector</li>
+	<li>keyword-style init of properties in constructor calls is supported by the ctor functions, and can be leveraged 
+		in apply and mapping scenarios (this feature was limited in jfli to the <code>new</code> macro)</li>
+</ul>
+
+
+
+	<a name="download"></a> <h3>Download and Communication</h3>
+
+	<p>
+	<a href="http://sourceforge.net/projects/foil/">Foil is hosted on SourceForge</a> 
+    <a href="http://sourceforge.net/"><img src="foil.sourceforge.net_files/sflogo.png" alt="SourceForge.net Logo" height="31" border="0" width="88"></a>
+    </p>
+    <p>We are going to try using SourceForge facilities for all communication regarding Foil, 
+    so please use the project tracker and forums there.
+	</p>
+
+   	<a name="quickstart"></a> <h3>Quick Start</h3>
+    Build and start the Java or CLI <a href="#runtimeservers">runtime server</a> of your choice.
+
+<pre>(compile-file "/dev/foil/foil.lisp")
+(load "/dev/foil/foil")
+(use-package :foil)
+;this is specific to LispWorks' sockets support
+(require "comm")
+;create a foreign VM
+(setf *fvm* (make-instance 'foreign-vm
+                           :stream
+                           (comm:open-tcp-stream "localhost" 13579)))
+
+;;;;;;;;; if Java ;;;;;;;;;;;
+;create a wrapper for dialog class
+(def-foil-class "javax.swing.JOptionPane")
+;use the wrapper
+(use-package "javax.swing")
+;show it
+(joptionpane.showmessagedialog nil "Hello World from Lisp")
+
+;;;;;;;;; if CLI ;;;;;;;;;;;;
+;create a wrapper for dialog class
+(def-foil-class "System.Windows.Forms.MessageBox")
+;use the wrapper
+(use-package "System.Windows.Forms")
+;show it
+(messagebox.show "Hello World from Lisp")</pre>
+
+<p>
+Typically you wouldn't define single class wrappers by hand, but would instead pre-generate wrappers for entire packages using
+<code>get-library-classnames</code> and <code>dump-wrapper-defs-to-file</code>. See <code>foil-java.lisp</code> and 
+<code>foil-cli.lisp</code> for examples.
+</p>
+
+	<a name="api"></a> <h2>Lisp API Reference</h2>
+
+    Other than 2 wrapper-generator helpers, all of the code for the Lisp side of foil resides in <code>foil.lisp</code>,
+ and is 
+    runtime server independent. Foil is designed to be very portable, 
+and is 99% pure Common Lisp. A complete port requires some 
+    facility for weak hash tables and object finalization.
+
+    <a name="fvms"></a> <h3>Foreign VMs</h3>
+    <p>
+    Foil is built upon the notion of interactions with one or more foreign VMs, 
+    instances of the JVM or CLR, running the Foil libraries, in another process on 
+    the same or another machine. The connection to a specific VM is via one or more 
+    bidirectional streams. Note that the instantiation of the foreign VM and the 
+    establishment of the streams is outside the scope of this Lisp API. It is 
+    presumed you might utilize one of the supplied runtime servers, creating stream 
+    connections via sockets or pipes with the API provided by your Lisp 
+    implementation. Many scenarios are possible, including embedding the Foil 
+    support libraries into your existing Java or C# application, multiple streams to different threads in the same VM, etc.
+    </p>
+    <p>
+    A foreign VM is represented by an instance of the <code>foreign-vm</code> class. Each instance has a primary default stream 
+    over which communication will occur. The special variable <code>*fvm*</code> represents the default VM to which any unqualified
+    Foil calls will be directed, and can be bound in a specific context, thus allowing for multiple VMs. 
+    Note - instance property/method calls will always be routed to the VM hosting that instance.
+   </p>
+   <p>
+   Foreign VMs maintain their own foreign reference pools, type caches 
+etc, and objects from one VM cannot be passed to another, 
+   even if they are both Java or CLI. However, in multi-thread, 
+multi-stream scenarios, references are valid across threads in the same 
+VM,
+   and the runtime server implementations are thread safe.
+   </p>
+   <p>
+   A simple startup scenario would look like this:
+   </p>
+   <p> - First, outside of Lisp, start the Java or CLI Foil runtime server supplied with Foil, running on port 13579, then:
+
+   </p><pre>   (load "/dev/foil/foil")
+   (use-package :foil)
+   (require "comm") ;LispWorks-specific socket library
+   (setf *fvm* (make-instance 'foreign-vm
+                           :stream
+                           (comm:open-tcp-stream "localhost" 13579)))
+    ;use Foil  </pre>
+   <p></p>
+	<ul>
+        <li>
+			<strong>Special Variable</strong> <code>*fvm*</code>
+			<p>
+		    This must be bound to an instance of <code>foreign-vm</code>. Default: nil
+            <br> Direct use of this other than during initial setup is not recommended, use instead <code>with-vm</code> or
+            <code>with-vm-of</code>
+			</p>
+            </li>
+        <li>
+			<strong>Special Variable</strong> <code>*thread-fvm*</code>
+			<p>
+		    If set, this thread is waiting on a callback from this VM. Default: nil 
+            <br>This is only used for advanced multi-thread scenarios
+			</p>
+            </li>
+        <li>
+			<strong>Special Variable</strong> <code>*thread-fvm-stream*</code>
+			<p>
+		    If this thread is waiting on a callback (i.e. <code>*thread-fvm*</code> is bound), and <code>(eql *fvm* *thread-fvm*)</code>, 
+            use this stream instead of the primary default stream for the VM. Default: nil
+            <br>This is only used for advanced multi-thread scenarios
+
+			</p>
+            </li>
+        <li>
+			<strong>Class</strong> <code>foreign-vm</code>
+			<p>
+		    Manages a foreign VM. Requires the initarg <code>:stream</code> be set to a bidirectional stream with an instance of the 
+            Foil runtime services on the other end.
+			</p>
+            </li>
+        <li>
+			<strong>Macro</strong> <code>(with-vm vm &amp;body body)</code>
+			<p>
+		    Causes the body to be evaluated in a context where <code>*fvm*</code> is bound to <code>vm</code>
+			</p>
+            </li>
+
+        <li>
+			<strong>Macro</strong> <code>(with-vm-of this &amp;body body)</code>
+			<p>
+		    Causes the body to be evaluated in a context where <code>*fvm*</code> is bound to the source VM of <code>this</code>
+			</p>
+            </li>
+           
+                </ul>
+
+        		
+    <a name="frefs"></a> <h3>Foreign References</h3>
+    Foil programs invariably create instances of objects in the foreign VM. Those objects are tracked by Lisp in instances 
+    of the <code>fref</code> class. The Foil API and the runtime server cooperate to ensure that objects referenced by Lisp are kept alive
+    in the foreign runtime, and that when no longer referenced by Lisp, they become available for collection in the foreign VM. 
+    <code>frefs</code> maintain their source VM, an ID and revision counter for this purpose. In addition, <code>frefs</code> can 
+    cache hash codes, types, and values that have been marshalled. Only a single <code>fref</code> will be created for each remote object,
+    thus any 2 <code>frefs</code> that reference the same object are themselves <code>eq</code>.
+
+	<ul>
+        <li>
+			<strong>Class</strong> <code>fref</code>
+			<p>
+		    Reference to a foreign object. <code>fref</code> is the superclass of all of the Foil classes generated to mirror the
+            foreign hierarchy.
+            </p>
+            </li>
+        <li>
+ 			<strong>Method</strong> <code>(fref-vm fref)</code> -&gt;The foreign-vm from which this reference originated
+            </li>
+        <li>
+ 			<strong>Method</strong> <code>(fref-id fref)</code> -&gt;An integer ID, unique within a VM
+            </li>
+
+        <li>
+ 			<strong>Method</strong> <code>(fref-type fref)</code> -&gt;A Class or Type fref
+            <p>
+            This will only be set if the type has been marshalled or <code>get-type</code> has been called on this fref.
+            </p>
+            </li>
+        <li>
+ 			<strong>Method</strong> <code>(fref-hash fref)</code> -&gt;int
+            <p>
+            This will only be set if the hash code has been marshalled or <code>hash</code> has been called on this fref.
+            </p>
+            </li>
+
+        <li>
+ 			<strong>Method</strong> <code>(fref-val fref)</code> -&gt; A Lisp object representing the value of the object
+            <p>
+            This will only be set if the value has been marshalled.
+            </p>
+            </li>
+
+                    <li>
+ 			<strong>Function</strong> <code>(ensure-typed-reference fref)</code> -&gt; <code>fref</code>, whose class may have been changed
+            <p>
+            			Given a generic Foil fref, determines the full type of the object and 
+			uses <code>change-class</code> to convert the fref to that type. 
+Since we don't want to always incur the cost of 
+                        type determination, the wrapper-generated API 
+functions return generic references. Use this function to convert to 
+			a typed reference corresponding to the full actual type of the object
+ when desired:
+</p><pre>CL-USER 42 &gt; (setf string-class (get-type-for-name "java.lang.String"))
+#}1
+
+CL-USER 43 &gt; (type-of string-class)
+FREF
+
+CL-USER 44 &gt; (ensure-typed-ref string-class)
+#}1
+
+CL-USER 45 &gt; (type-of string-class)
+CLASS.      </pre>
+            <p></p>
+            </li>
+
+
+    </ul>
+
+                <a name="wrappergen"></a> <h3>Wrapper Generation</h3>
+
+	<ul>
+		<li>
+			<strong>Macro</strong> <code>(def-foil-class full-class-name) -&gt; unspecified</code>
+			<p>
+			Given the package-qualified, case-correct name of a Java/CLI class as a string, will 
+			generate wrapper functions for its public constructors, fields, properties and methods.
+			</p>
+			<p>
+			The core API for generating interfaces to Java/CLI is the <code>def-foil-class</code> macro. This 
+			macro will, at expansion time, use Java/CLI reflection to find all of the public 
+			constructors, fields, properties and methods of the given class and generate functions to 
+			access them.
+			</p>
+			<h4>The Generated API</h4> 
+			When you e.g. <code>(def-foil-class "java.lang.ClassName")</code> 
+			you get several symbols/functions:
+			<ul>
+				<li>
+					A package named <code>|java.lang|</code> (note case)<br>
+					from which the following are exported:
+				</li>
+				<li>
+					A class-symbol: <code>classname.</code> (note the dot is part of the name)<br>
+					which can usually be used where a typename is required. It also serves as the 
+					name of the Lisp typed reference class.
+				</li>
+				<li>
+					Every non-interface class with a public constructor will get;
+					<ul>
+						<li>
+							A constructor, <code>(classname.new &amp;rest args) -&gt; fref</code>, which 
+							returns a foreign-reference (fref) to the newly created object. Note that the constructor function,
+							and therefore everything built upon it, can take the actual arguments to the Java/CLI ctor, followed by
+							zero or more property initializers, which take the form:<br>
+							:keywordized-propertyname value<br>
+							e.g. <code>(window.new parent :width 200 :height 200)</code> <br>
+							thus supporting the creation and some setup of a new object in a single call
+
+						</li>
+						<li>
+							A method defined on <a href="#makenew"><code>make-new</code></a>, ultimately 
+							calling <code>classname.new</code>, specialized on (the value of) the class-symbol
+						</li>
+					</ul>
+					Note that if the constructor is overloaded, there is just one function generated, 
+					which handles overload resolution. The function documentation string describes 
+					the constructor signature(s) from the Java/CLI perspective. The same argument 
+					conversions are performed as are for fields (see below).
+				</li>
+				<li>
+					All public fields will get a getter function:<br>
+					<code>(classname.fieldname [instance]) -&gt; field value</code><br>
+					and a setter:<br>
+					<code>(setf classname.fieldname [instance])</code><br>
+					Instance field wrappers take a first arg which is the instance. Static fields 
+					get a symbol-macro <code>*classname.fieldname*</code>
+					<p>
+					If the type of the field is primitive, the field value will be converted to a 
+					native Lisp value. If it is a Java/CLI String, it will be converted to a Lisp string. 
+					Otherwise, a foreign reference to the Java/CLI object is returned. Similarly, when 
+					setting, Lisp values will be accepted for primitives, Lisp strings for Strings, 
+					or foreign references for reference types.
+					</p>
+				</li>
+				<li>
+					All public properties (explicit properties in the case of the CLI, 
+					implied properties in the case of Java as specified by the JavaBeans protocol) 
+					will get a getter function if the property supports get:<br>
+					<code>(classname.propertyname [instance] [args]) -&gt; property value</code><br>
+					and a setter if the property supports set:<br>
+					<code>(setf classname.propertyname [instance] [args])</code><br>
+					Instance property wrappers take a first arg which is the instance. Static properties 
+					get a symbol-macro <code>*classname.propertyname*</code>
+				</li>
+				<li>
+					Every public method will get a wrapper function:<br>
+					<code>(classname.methodname &amp;rest args) -&gt; return-value</code><br>
+					As with constructors, if a method is overloaded a single wrapper is created that 
+					handles overload resolution. 
+					<p>
+					The same argument and return value conversions are performed as are for fields. 
+					The function documentation string describes the method signature(s) from the 
+					Java/CLI perspective.
+					</p>
+
+				</li>
+				<li>
+					A Lisp class with the class-symbol as its name. It will have as its superclasses 
+					other Lisp classes corresponding to the Java/CLI superclass/superinterfaces, some of 
+					which may be forward-referenced-classes, and will be ultimately derived from <code>fref</code>.  
+                    An instance of this class will be 
+					returned by <code>ensure-typed-ref</code>, at which point the entire hierarchy will 
+					consist of finalized standard-classes.
+				</li>
+				<li>
+					Note that, due to the need to reference other Java/CLI types during the definition 
+					of a class wrapper, symbols, classes, and packages relating to those other types 
+					may also be created. In all cases they will be created with names and 
+					packages as described above.
+				</li>
+			</ul>
+
+		</li>
+				<li>
+            			<strong>Function</strong> <code>(get-library-classnames jar-or-assembly-filename &amp;rest packages) 
+			-&gt; list-of-strings</code>
+			<p>
+			Returns a list of class name strings. Packages should be strings of the form "java/lang" or "System/IO"
+                    for recursive lookup and "java/util/" or "System/IO/" (note trailing slash) for non-recursive. </p>
+				</li>
+				
+		<li>
+			<strong>Function</strong> <code>(dump-wrapper-defs-to-file filename classnames)  -&gt; 
+			filename</code>
+			<p>
+			Given a list of classnames (say from <code>get-library-classnames</code>), writes 
+			the consolidated expansions of calls to <code>def-foil-class</code> to a file:
+			</p>
+			<pre>(dump-wrapper-defs-to-file "/lisp/java-lang.lisp"
+  (get-library-classnames "/j2sdk1.4.2_01/jre/lib/rt.jar " "java/lang/"))
+(compile-file "/lisp/java-lang")
+(load "/lisp/java-lang")
+(use-package "java.lang")
+;Wrappers for all of java.lang are now available
+</pre>
+            This is the recommended way to access entire library packages. In particular, it has the advantage that the dumped
+            code does not require a foreign runtime to either compile or load.
+		</li>
+</ul>
+
+	<a name="objects"></a> <h3>Object Creation</h3>
+    In addition to the generated ctor wrappers (<code>classname.new</code> described above), the following, built upon the same,
+    add some additional capabilites and ease of use:
+	<ul>
+		<li>
+			<strong><a name="makenew"></a>Generic Function</strong> <code>(make-new classname. &amp;rest args) -&gt; fref</code>
+			<p>
+			Allows for definition of before/after methods on constructors. Calls <code>classname.new</code> ctor. 
+			The new macro expands into a call to this.
+			</p>
+		</li>
+		<li>
+			<strong>Macro</strong> <code>(new class-spec args &amp;body body) -&gt; fref</code>
+			<p>
+            <code>class-spec -&gt; class-sym | (class-sym this-name)
+<br>class-sym -&gt; classname.
+<br>args -&gt; as per ctors and make-new</code></p>Creates a new instance of class, using the <code>make-new</code> generic function,
+then runs the body replacing all top-level calls of the form
+<code>(.anything whatever)</code>
+with
+<code>(classname.anything new-object whatever)</code>
+If <code>this-name</code> is supplied it will be bound to the newly-allocated object and available
+to the body (note - but not to the args!)
+			<p></p> Example:
+<pre>(new shell. (*display* :text "SWT Apropos" :layout (gridlayout.new 1 t ))
+                  (.setsize 800 600)
+                  (.setlocation 100 100))            </pre>
+Expands into:
+<pre>(LET ((#:G2249 (MAKE-NEW SHELL. *DISPLAY* :TEXT "SWT Apropos" :LAYOUT (GRIDLAYOUT.NEW 1 T))))
+  (PROGN
+    (SHELL.SETSIZE #:G2249 800 600)
+    (SHELL.SETLOCATION #:G2249 100 100))
+  #:G2249)</pre>
+		</li>
+    </ul>
+
+
+    <a name="objectservices"></a> <h3>Object Services</h3> 
+    These functions provide 
+    access to basic facilities provided by all runtimes (usually through syntax or 
+    the Object class), but should be used instead, as they are portable and can be 
+    more efficient, caching and resolving some things locally on the Lisp side.
+    <ul>
+        <li>
+            <strong>Function</strong> <code>(equals fref1 fref2) -&gt; boolean</code>
+            <p>
+            Portable Object.equals/Equals
+            </p>
+        </li>
+        <li>
+            <strong>Function</strong> <code>(instance-of fref type) -&gt; boolean</code>
+            <p>
+            Portable instanceof/is
+            </p>
+        </li>
+
+        <li>
+            <strong>Function</strong> <code>(to-string fref) -&gt; string</code>
+            <p>
+            Portable Object.toString/ToString
+            </p>
+        </li>
+
+        <li>
+            <strong>Function</strong> <code>(hash fref &amp;key rehash) -&gt; int</code>
+            <p>
+            Portable Object.hasCode/GetHashCode. Note: will cache the value on the fref. If 
+            already cached, will return that, unless :rehash is t.
+            </p>
+        </li>
+
+        <li>
+            <strong>Function</strong> <code>(get-type fref) -&gt; Class or Type fref</code>
+            <p>
+            Portable Object.getClass/GetType. Note: will cache the value on the fref. Note also that obtaining the exact type of
+            the object is completely independent of the coercion of the fref to its corresponding Lisp type 
+            (see <code>ensure-typed-ref</code>)
+            </p>
+        </li>
+        <li>
+            <strong>Function</strong> <code>(iref indexable-obj &amp;rest indexes) -&gt; a value</code>
+            <p>
+            Calls the default indexer for the object. CLI only. Settable.
+            </p>
+        </li>
+
+    </ul>
+
+        <a name="vectors"></a> <h3>Vectors</h3> 
+        <ul>
+
+        <li>
+            <strong>Function</strong> <code>(make-new-vector type length &amp;rest inits) -&gt; array fref</code>
+            <p>
+            Creates a foreign vector of specified type and length. There can be fewer inits than the length, in which case 
+            the remaining values take the default.
+            </p>
+        </li>
+        <li>
+            <strong>Function</strong> <code>(vref vector index) -&gt; value</code>
+            <p>
+            Returns the value at the index. Settable.
+            </p>
+        </li>
+        <li>
+            <strong>Function</strong> <code>(vlength vector index) -&gt; int</code>
+            <p>
+            Returns the length of the vector.
+            </p>
+        </li>
+        </ul>
+
+<a name="misc"></a> <h3>Miscellaneous</h3> 
+        <h4>Arguments and Boxing</h4>
+<p>
+In most cases argument matching and conversion should be transparent. Lisp strings can be passed where Strings are required,
+Lisp numbers where int float etc are required. <code>t</code> and <code>nil</code> can be passed where booleans are required etc. 
+<code>nil</code> can be passed for <code>null</code>.
+Some Foil APIs (e.g. make-new-vector) require <code>type</code> arguments, and unless specified otherwise, 
+any of the following are acceptable:
+			</p><ul>
+				<li>
+					(the value of) A class-symbol - <code>classname.</code>
+				</li>
+				<li>
+					A primitive designator keyword - <code>:boolean|:byte|:char|:double|:float|:int|:long|:short</code>
+				</li>
+				<li>
+					A fref referring to an actual Class/Type instance
+				</li>
+				<li>
+					A <code>"package.qualified.ClassName"</code> string, case-sensitive. 
+                    This is least efficient and should only be used in dynamic scenarios.
+				</li>
+			</ul>
+Note that this only applies to Foil APIs, if a foreign runtime API takes a Class/Type argument, you must supply a 
+fref referring to an actual Class/Type instance.
+<p></p>
+<p>
+ Occasionally it may be necessary to provide a hint as to the intended type of a numeric argument in order to 
+				force resolution to a particular overload.
+        </p><li>
+            <strong>Function</strong> <code>(box type val)</code>
+            <p>
+            Type must be a primitive designator keyword - <code>:boolean|:byte|:char|:double|:float|:int|:long|:short</code>
+            <br>Produces an object that when passed to a Foil-generated function will be interpreted by the runtime as that type. 
+            Note that silent truncation may occur.
+            </p>
+        </li>
+<p></p>
+<p>
+ It is also possible to create vectors in-line as arguments, which will avoid multiple round-trips vs. 
+ calling <code>make-new-vector</code> in place. Note this is only good for ephemeral vectors, as there is no way to retain a 
+ reference to the newly-created vector.
+        </p><li>
+            <strong>Function</strong> <code>(box-vector type &amp;rest vals)</code>
+            <p>
+            Produces an object that when passed to a Foil-generated function will be an array of type with the supplied values.
+            </p>
+        </li>
+Example:
+<pre>CL-USER 102 &gt; (vref (box-vector string. "a" "b" "c" "d") 2) ;only one round-trip
+"c"</pre>
+<p></p>
+        <h4>Class/Type Helpers</h4>
+<ul>        
+    <li>
+            <strong>Function</strong> <code>(get-type-for-name full-class-name)</code>
+            <p>
+            Returns a Class/Type instance corresponding to name. Portable Class.forName/Type.GetType.
+            </p>
+        </li>
+    <li>
+            <strong>Function</strong> <code>(full-class-name class-symbol)</code>
+            <p>
+            Returns the package qualified name string corresponding to the class symbol:
+</p><pre>CL-USER 104 &gt; (full-class-name string.)
+"java.lang.String"</pre>
+            <p></p>
+        </li>
+</ul>
+
+        <a name="proxies"></a> <h3>Proxies and Callbacks</h3> 
+        Proxies allow the creation of foreign objects that implement one
+ or more interfaces (or in the case of CLI, one or more interfaces or 
+        a single delegate) 
+		in Lisp, and thus callbacks from the foreign VM to Lisp. Foil supports
+ Lisp calling foreign runtime calling Lisp... to an 
+        arbitrary (probably stack-limited) depth.
+<ul>
+        <li>
+            <strong>Generic Function</strong> <code>(handle-proxy-call method-symbol proxy &amp;rest args))</code>
+            <p>
+            The proxy infrastructure routes all callbacks to this 
+generic function. If a proxy p implements an interface i, and the 
+foreign
+            VM ends up invoking i.foo on p, it will map to a call to <code>handle-proxy-call</code>
+ with the first 2 arguments
+            of 'i.foo and p, followed by the actual arguments to the 
+invocation. So, callback handlers can be defined by specializing 
+            methods on the method-symbol, the proxy object, or both. The
+ unspecialized method spews out "unhandled proxy call" to 
+            standard output and returns nil to the foreign VM. Any 
+unhandled errors that occur on the Lisp side during a callback turn into
+ 
+            exceptions on the runtime server.
+            </p>
+        </li>
+
+        <li>
+            <strong>Function</strong> <code>(make-new-proxy arg-marshall-flags arg-marshall-depth &amp;rest interface-types) -&gt; proxy fref</code>
+            <p>
+            Creates and returns a proxy object that implements the given interface types or delegate type. <code>arg-marshall-flags</code> and
+            <code>arg-marshall-depth</code> will be used to marshall the arguments to the callback. No handlers are defined by this function.
+            </p>
+        </li>
+
+            <li>
+            <strong>Macro</strong> <code>(new-proxy proxy arg-marshall-flags arg-marshall-depth &amp;rest interface-defs) -&gt; proxy fref</code>
+            <p>
+            Creates and returns a proxy object that implements the given interface types or delegate. 
+                <code>
+                <br>proxy -&gt; a symbol
+<br>interface-def -&gt; (interface-name method-defs+)
+<br>interface-name -&gt; classname. (must name an interface or delegate type)
+<br>method-def -&gt; (method-name (args*) body)
+<br>method-name -&gt; symbol (without classname)</code>
+                <br>The symbol <code>proxy</code>
+will be bound to the proxy instance in the body of the method implementations.
+            </p>Example:
+<pre>(new-proxy p +MARSHALL-ID+ 0
+           (keylistener.
+             (keyreleased (event)
+               (when (eql *SWT.CR* (keyevent.character event))
+                 (gob)))))                </pre>
+        </li>
+
+    </ul>
+            
+
+        <a name="marshalling"></a> <h3>Marshalling</h3> 
+        <p>
+    Foil supports an extensible marshalling system which allows the values of reference/composite types to be returned in 
+    addition to, or even instead of, the references themselves. Used appropriately, this can substantially reduce the number
+    of round trips between processes and avoid significant 'chatter' overhead. </p>
+
+    <p>
+    Marshalling comes into play whenever a reference type is returned 
+from a Foil function. With certain settings, it is possible 
+    to return any or all of a reference, its hash code, its type, and 
+its value (and the same for any of its 
+    value's reference members), to a specific depth. The nature and 
+depth of the marshalling is governed by two special variables on the 
+Lisp side - 
+    <code>*marshalling-flags*</code> and <code>*marshalling-depth*</code>.
+    </p>
+    
+
+    <p>The format of marshalled values is determined
+    by the runtime servers, and both the Java and CLI servers provided with Foil have facilities for adding new marshallers 
+    for specific types. The way an object's value is marshalled is a function of its type.</p>
+      
+      <p>
+      Class or Types will always marshall the string representing the packageQualifiedTypeName, ignoring <code>*marshalling-depth*</code>
+      </p><p>By default, the following marshalling will be performed when requested, i.e. <code>*marshalling-depth*</code> &gt; 0</p>
+      <ul>
+		<li>Arrays marshall as simple Lisp vectors</li>
+		<li>Collections and other enumerable entities marshall as simple Lisp lists</li>
+		<li>Default, if no other marshaller applies - a Lisp assoc-list of keywordized-property-name/value pairs for any public properties
+            of the object</li>
+      </ul>
+      <p></p>
+      
+	<ul>
+        <li>
+			<strong>Special Variable</strong> <code>*marshalling-depth*</code>
+			<p>
+		    Default: 0
+            <br>A depth of 0 means no values are marshalled, a setting of 1 means 
+			that values will be marshalled for the returned object (if it is a reference), but not any nested references. 
+			When &gt; 1 nested reference types will marshall, to that depth of nesting.
+			</p>
+            </li>
+          <li>
+			<strong>Special Variable</strong> <code>*marshalling-flags*</code>
+			<p>Either <code>+MARSHALL-NO-IDS+</code>, or the logical or-ing of <code>+MARSHALL-ID+</code> and zero or more of:
+              <code>+MARSHALL-HASH+</code> and <code>+MARSHALL-TYPE+</code>
+		    <br>Default: <code>+MARSHALL-ID+</code>
+            <br>A setting of <code>+MARSHALL-NO-IDS+</code> means that no frefs will be returned, and thus no references will be held 
+              on the VM side. If <code>*marshalling-depth*</code> is 0 then nil will be returned. If <code>*marshalling-depth*</code> &gt; 0
+              then the value will be returned instead of the fref.
+			</p>
+              <p>Otherwise, <code>+MARSHALL-ID+</code> must be set, and frefs will be returned for reference types. 
+              If <code>*marshalling-depth*</code> &gt; 0, 
+              then the marshalled values will be in the <code>fref-val</code> slot. If <code>+MARSHALL-HASH+</code> is set then 
+              the object's hash code will be calculated and stored in the <code>fref-hash</code> slot. Similarly, if 
+              <code>+MARSHALL-TYPE+</code> is set then 
+              the object's class/type will be determined and stored in the <code>fref-type</code> slot.
+              </p>
+            </li>  
+        <li>
+            <strong>Macro</strong> <code>(with-marshalling (depth &amp;rest flags) &amp;body body)</code>
+            <p>
+            Evaluates the body in a context in which the <code>*marshalling-depth*</code> is set to depth and 
+            <code>*marshalling-flags*</code> to the <code>logior</code> of flags.
+            </p>
+        </li>
+        <li>
+            <strong>Function</strong> <code>(marshall fref)</code>
+            <p>
+            Explicitly marshalls the object with the current <code>*marshalling-flags*</code> and <code>*marshalling-depth*</code> settings,
+            and returns the marshalled object (which may be the same fref, but with additional data in its type/hash/val slots)
+            </p>
+        </li>
+            
+            </ul>      
+
+            Marshalling example:
+<pre>CL-USER 79 &gt; (setf string-class (get-type-for-name "java.lang.String"))
+#}1
+
+CL-USER 88 &gt; (class.getpackage string-class)
+#}12
+
+CL-USER 90 &gt; (pprint (with-marshalling (1 +MARSHALL-NO-IDS+)
+                       (class.getpackage string-class)))
+
+((:IMPLEMENTATIONTITLE . "Java Runtime Environment")
+ (:IMPLEMENTATIONVENDOR . "Sun Microsystems, Inc.")
+ (:IMPLEMENTATIONVERSION . "1.4.2_05")
+ (:NAME . "java.lang")
+ (:SEALED)
+ (:SPECIFICATIONTITLE . "Java Platform API Specification")
+ (:SPECIFICATIONVENDOR . "Sun Microsystems, Inc.")
+ (:SPECIFICATIONVERSION . "1.4")) </pre>
+
+
+
+<a name="runtimeservers"></a><h2>Runtime Servers</h2>
+
+<p>Foil includes 2 complete implementations of the runtime server 
+portion of the protocol, one for Java/JVM, the other for C#/CLI. The
+implementations are 100% Java/Managed, and use only standard libraries.
+
+Both will run the protocol over one or more TCP sockets specified on the
+ command line, or, if none specified, via standard IO.
+</p>
+
+<p>Project files are included for Eclipse and Visual Studio. All of the 
+Java code is in com/richhickey/foil and the stand-alone server
+is in RuntimeServer.Main. The CLI implementation is in 2 projects, one 
+for the Foil library itself - FoilCLI, and the other for the
+stand-alone server - FoilCLISvr.
+</p><p>
+After building, you can invoke the Java server as follows:
+</p>
+<p>
+<code>java -cp . com.richhickey.foil.RuntimeServer 13579</code>
+</p>
+<p>
+Make sure the classpath includes the libraries and .jars you will want to use via Foil.
+</p>
+
+<p>After building, you can invoke the CLI server as follows:</p>
+
+<code>foilclisvr 13479</code>
+
+
+
+<a name="protocol"></a><h2>Protocol</h2>
+
+The foil protocol describes the on-stream interface between a Lisp 
+instance and a runtime instance, and should not be confused with the foil 
+library which provides the interface to the protocol for Common Lisp.  A user
+        of Foil will not need to know the protocol, but if you intend to add support
+        for another runtime environment (Python anyone?) or host language (Scheme anyone?),
+        hopefully this section will help. Note that the protocol docs are not formal, and
+        mostly consists of notes to myself and Eric. This will be improved when I get time. For the moment,
+        should there be any omissions or inaccuracies here, the Lisp and Java implementations should be 
+         considered canonic.
+
+<h3>Connection Services</h3> 
+
+Foil is a stream-based protocol.  However, no 
+protocol is provided for the establishment of the streams - that is an 
+implementation detail of the runtime and Lisp libraries.  It is suggested 
+that any foil runtime implementation provide at least a stand-alone 
+executable server that implements the protocol over its standard IO ports, as well  
+        as being able to run over a TCP/IP socket.
+Many other scenarios are possible, including multi-socket servers, pre-existing Lisp and runtime 
+instances discovering each other etc.  The remainder of the protocol 
+description presumes a bi-directional stream has been established.  
+
+Sendable messages:
+<ul>
+
+<li>	(:cref</li>
+	<li>(:call</li>
+		<li>(:free</li>
+		<li>(:new</li>
+	<li>(:marshall</li>
+	<li>(:hash</li>
+	<li>(:equals</li>
+	<li>(:type-of</li>
+	<li>(:is-a</li>
+	<li>(:str</li>
+	<li>(:tref</li>
+	<li>(:bases</li>
+	<li>(:members</li>
+	<li>(:vector</li>
+	<li>(:vget</li>
+	<li>(:vset</li>
+	<li>(:vlen</li>
+	<li>(:proxy</li>
+	<li>(:iget</li>
+	<li>(:iset</li>
+
+
+</ul>
+<p>Returnable messages:
+</p><ul>
+
+	<li>(:ret</li>
+	<li>(:err</li>
+	<li>(:proxy-call	;only async or from withing a :call</li>
+
+</ul>
+
+<h3>Invocation Services</h3>
+	Obtaining callable references (crefs)
+<p>	<code>(:cref member-type tref|"packageQualifiedTypeName" "memberName")</code>
+</p><p>		Where member-type is an integer representing one of:
+</p><ul>		 
+			<li>method (0)</li>
+			 <li>field (1)</li>
+			 <li>property-get (3)</li>
+			 <li>property-set (4)</li>
+ </ul>
+
+<p>		Note that both Java and the CLI support overloading, so a single member name might map to multiple overloads. 
+		The resolution of the overloading must occur in the runtime server at the time of invocation, i.e. any of the overloads
+		may be called through the same cref.
+
+</p><p>		Returns -&gt; A reference to a callable thing is returned in the standard return format (see below).
+</p><p>		<code>(:ret #{:ref ...})</code>
+
+</p><p> </p><h4> Creating new object instances</h4>
+<p> 	<code>(:new tref marshall-flags marshall-value-depth-limit (args ...) property-inits ...)</code><br>
+</p><p> where property-inits is a set of <code>:keyword-style-name value</code> pairs
+</p><p></p><h4>Calling a callable</h4>
+			<code>(:call cref marshall-flags marshall-value-depth-limit target args ...)</code><br>
+
+<p>			Example:</p><p>
+				<code>(:call #}101 1 0 2 #}17 "fred")</code>
+
+</p><p>			Where cref is an cref that has been obtained via :cref, or, only in the case of calls to Lisp, 
+			a symbol that names a function.
+
+<br>			marshalling-flags is an integer representing a bitwise-or'ing of:
+</p><ul>
+
+<li>				marshall-id (1)</li>
+				<li>marshall-type (2)</li>
+				<li>marshall-hash (4)</li>
+
+</ul>
+			a marshall-value-depth-limit of 0 means no reference values are marshalled, a setting of 1 means 
+			that reference values will be marshalled for the return value (if it is a reference), but not any nested references. 
+			When &gt; 1 nested reference types will marshall to that depth of nesting.
+            <br> If marshalling-flags is 0, no references will be returned (only values) and if depth is also 0 then nil will be returned.
+
+<br>	target is the object upon which to invoke the method/field/property - pass nil if static
+
+<br>			args are zero or more args as per below.
+
+<p>		</p><h4>Return Format</h4>
+<br>			one of:
+<ul>
+<li>			<code>(:ret value)</code><br>
+				All normal returns are packaged in a form as above, value is as per below. 
+				If a function has a void return type, nil should be returned. </li>
+			<li><code>(:proxy-call ...)</code><br>
+				A nested callback, in the proxy-call format described below. The receiver should process the call, 
+				send back its return, then re-read
+				the stream for the return value of the original call.</li>
+			<li><code>(:err "error description" "stack trace")</code><br>
+				returned if an exception occurred while processing the request</li>
+
+</ul>
+		<h4>Argument and Return Values</h4>
+			Primitives and Value Types<br>
+			<ul>
+
+				<li>"Strings are in double quotes"</li>
+				<li>Numbers are unadorned decimal numbers with or without a decimal point,leading -, e etc</li>
+				<li>nil is null</li>
+				<li>nil is false</li>
+				<li>t is true</li>
+			</ul>
+
+			<p></p><h4>Boxed Primitives</h4>
+				Occasionally it may be necessary to provide a hint as to the intended type of a numeric argument in order to 
+				force resolution to a particular overload.
+
+				<p><code>#{:box typename value}</code><br>
+
+                </p><p>Where typename is one of <code>:byte :int :long :short :float :double</code>
+				</p><p>N.B. silent truncation may occur
+				</p><p>Return values should never be boxed<br>
+
+			</p><p></p><h4>vector literals</h4>
+			A vector can be specified in-line as an argument
+				<code>#{:vector "packageQualifiedTypeName"|tref|:int(etc) value ...}</code><br>
+
+			<p></p><h4>References</h4>
+
+				Reference types are returned with the following tagged syntax:<br>
+
+				<code>#{:ref id rev :type a-ref :hash an-int :val marshalled-value}</code>
+				<ul>
+
+
+				<li>:ref, id, and rev must be supplied, all others are optional</li>
+
+				<li>id - A unique integer reference that identifies the object. The object will be kept alive on the hosting side 
+					until it is freed. Multiple references to the same object will always have the same id. 
+					</li>
+
+				<li>:type - A reference to the Type (CLI) or Class (Java) object that is the type of the object. Note that this may be the 
+					first time this reference is seen (and thus it must be registered for lifetime maintenance)
+					This will only be available if the marshall-type flag is set.</li>
+
+				<li>:hash - An integer representing the hash value of the object. This will only be available if the marshall-hash flag is set.</li>
+
+				<li>:val - A Lisp-readable representation of the value of the object. This will be obtained by using the marshaller 
+					registered for the type of the object. This will only be available when marshall-value-depth-limit is &gt; 0. 
+					Note #{ and #} user-space read macros are used by the implementation of foil.</li>
+	
+
+				</ul>
+				 Note that it is possible to return marshalled values of reference objects without maintaining the reference object 
+				 on the hosting side (by setting the marshall-id flag to 0 and having marshall-value-depth-limit &gt; 0
+
+				 <p>A reference (obtained previously) is passed back to its host like this:
+
+				 </p><p><code>#}123</code>
+
+				 </p><p>The host will look up the object with that id and pass it along to the call.
+
+		<br></p><h4>Exception Reporting</h4>
+			All exceptions are reported via a return of the form:<p>
+			<code>(:err "error description" "stack trace")</code></p><p>
+				if an exception occurred while processing the request. Unless the exception originated in the reflection API, 
+				it is preferred that the stack trace be of the inner (reflection-invoked) call.
+
+</p><h3>Object support services</h3>
+		<h4>Object references</h4>
+		<h4>Object lifetime management</h4>
+			<code>(:free refid refrev ...)</code> -&gt; nil
+			
+
+<p>a list of id/rev pairs is passed.  Allows one or more refs to be GC-ed 
+on the hosting side.  It is an error to refer to these refids again.<br> 
+
+        </p><h4>Object marshalling</h4><p>
+			It is anticipated that runtime servers will provide for user-installable marshallers, associated with types,
+			that will render the value of an object of that type on a stream in a form readable by Lisp. By default at least
+			the following marshallers should be provided:
+				</p><ul>
+
+				<li>Type|Class - must always marshall the string representing the packageQualifiedTypeName, ignoring marshalling-depth</li>
+				<li>arrays - should marshall as simple vector literals: #(...)</li>
+				<li>collections and other enumerable entities - should marshall as simple lists (...)</li>
+				<li>default, if no other marshaller applies - should yield an assoc-list of keywordized-property-name/value pairs</li>
+
+				</ul><p>
+			In addition to marshalling returns during calls, the value of an object reference can be explicitly marshalled:
+			</p><p><code>(:marshall ref marshall-flags marshall-value-depth-limit)</code> -&gt; Lisp-readable-value
+
+		</p><p>Hash values<br>
+			<code>(:hash ref)</code> -&gt; int<br>
+
+		</p><p>Object equality<br>
+			<code>(:equals ref ref)</code> -&gt; t|nil, per Object.Equals<br>
+
+		</p><p>ToString<br>
+			<code>(:str ref)</code> -&gt; "string value"<br>
+
+ </p><p></p><h3>Reflection Services</h3>
+
+
+	Note, when trefs are returned by these reflection calls, the :val field of the reference is always (default) marshalled, 
+	i.e. set to the packageQualifiedTypeName as a string.
+
+	<p></p><h4>Obtaining a reference to a Type/Class object</h4>
+	<code>(:tref "packageQualifiedTypeName")</code> -&gt; tref<br>
+
+	<p></p><h4>Object type</h4>
+		<code>(:type-of ref)</code> -&gt; tref<br>
+
+
+	<p><code>(:is-a ref tref)</code> -&gt; t|nil<br>
+
+	</p><p><code>(:bases tref|"packageQualifiedTypeName")</code><br>
+</p><pre>-&gt; (:ret ("packageQualifiedTypeName" ...))    ;most-derived to least-derived
+</pre>
+
+
+	<p><code>(:members tref|"packageQualifiedTypeName")</code><br>
+
+	<code>
+</code></p><pre><code>-&gt; (:ret ( (:ctors doc-string ...)
+        (:methods ((:name string)
+                   (:static bool)
+                   (:doc doc-string)) ...)
+        (:fields ((:name string)
+                  (:static bool)
+                  (:doc doc-string)) ...)
+        (:properties ((:name string)
+                      (:static bool)
+                      (:get-doc doc-string)
+                      (:set-doc doc-string)) ...)))</code></pre>
+
+<h4>Proxies</h4>
+<pre><code>(:proxy marshall-flags marshall-value-depth-limit interface-trefs ...)</code><br>
+-&gt; (:ret proxy-ref)
+</pre>
+<p>
+		Creates a proxy object that implements the given interface(s). When any of the object's methods are called,
+		sends a :proxy-call message of the form:</p><p>
+		<code>(:proxy-call method-symbol proxy-ref args ...)</code>
+		</p><p>where the proxy-ref is the same one originally returned from the :proxy message, and the
+		args are marshalled with the flags and depth requested in the :proxy message. method-symbol has the form</p><p>
+		<code>|package.name|::classname.methodname</code></p><p>note this means that the Lisp names are not independent, hmmm...
+
+</p><h3>Vectors</h3>
+	Creating an vector:<br>
+	<ul>
+
+	<li>(:vector tref|"packageQualifiedTypeName" length value ...)
+		Creates an vector of the specified type with the specified length
+		Initial values are optional and may be fewer than the length.
+		-&gt; aref</li>
+	<li>(:vget aref marshall-flags marshall-value-depth-limit index)
+		-&gt; value</li>
+	<li>(:vset aref index value)
+		-&gt; nil</li>
+	<li>(:vlen aref)
+		-&gt; int</li>
+	</ul>
+
+	<a name="summary"></a> <h2>Summary</h2>
+ <p>
+ I'd like to thank my good friend Eric Thorsen for his hard work on the CLI/C# port.
+ </p>
+<p>
+I hope you find Foil useful. It is my sincere intent that it enhance the utility and interoperability of Common Lisp. 
+I welcome comments and code contributions.
+</p>
+<p>
+Rich Hickey, February, 2005
+</p>
+
+
+</body></html>

@@ -1,0 +1,675 @@
+<html>
+<head>
+	<title>Lisplets</title>
+	<link rel="stylesheet" type="text/css" media="screen" href="lisplets.css">
+</head>
+	<body>
+	<h2>Lisplets - a Lisp-friendly interface to Java Servlets</h1>
+
+	<h5>Copyright (c) Rich Hickey. All rights reserved.</h5>
+
+	<p>
+	The use and distribution terms for this software are covered by the <a href="http://opensource.org/licenses/cpl.php">Common 
+	Public License 1.0</a>, which can be found in the file CPL.TXT at the root of 
+	this distribution. By using this software in any fashion, you are agreeing to be 
+	bound by the terms of this license. You must not remove this notice, or any 
+	other, from this software.
+	</p>
+
+	<h2>Contents</h2>
+
+	<ul>
+		<li>
+			<a href="#intro">Introduction</a>
+		</li>
+		<li>
+			<a href="#download">Download</a>
+		</li>
+		<li>
+			<a href="#setup">Setup and Configuration</a>
+		</li>
+		<li>
+			<a href="#quickstart">Quick Start</a>
+		</li>
+		<li>
+			<a href="#api">API Reference</a>
+			<ul>
+				<li>
+					<a href="#webxml">web.xml Parameters</a>
+				</li>
+				<li>
+					<a href="#request">Request Format</a>
+				</li>
+				<li>
+					<a href="#response">Response Format</a>
+				</li>
+			</ul>
+		</li>
+		<li>
+			<a href="#summary">Summary</a>
+		</li>
+	</ul>
+
+
+	<a name="intro"></a> <h3>Introduction</h3>
+
+	<p>
+	Lisplets are Java Servlets that forward their requests, and gather their 
+	response headers, using s-expressions over sockets.  They enable easy 
+	integration of Common Lisp or Scheme into a Java-based web environment.  
+	</p>
+
+	<p>
+	The library consists of a single Java class which implements 
+	<a href="http://java.sun.com/j2ee/1.4/docs/api/javax/servlet/http/HttpServlet.html">HTTPServlet</a>. 
+	It packages the request header, parameters, cookies, session, application, and 
+	user info into an s-expression and sends it over a TCP socket that can be read 
+	from Lisp using <code>read</code>. The Lisp process returns status, headers, 
+	session and application state as an s-expression, followed by the document 
+	content. This servlet should work with any servlet container, such as 
+	<a href="http://jakarta.apache.org/tomcat/index.html">Tomcat</a>,
+	<a href="http://www.caucho.com/">Resin</a>, <a href="http://www.mortbay.org/jetty/index.html">Jetty</a>,
+	<a href="http://www.macromedia.com/software/jrun/">JRun</a> and many others.
+	</p>
+
+	<p>
+	The advantages for Lisp developers are plentiful.  The various servlet container 
+	implementations span the full range of cost (including free), embed-ability, 
+	scalability, platform support etc.  Several provide a full HTTP server 
+	implementation and all can integrate with the industry standard web servers.  
+	Thus the Lisp developer is spared the re-inventing of an HTTP server, SSL 
+	support etc.  In addition, these platforms support the sending of only specific 
+	requests to the servlet, allowing for static content to be handled directly by 
+	the web server, or a mix of Lisp-generated content and <a
+   href="http://java.sun.com/products/jsp/index.jsp#specs">JSP</a> content. The 
+   servlet API goes beyond HTTP services by providing for session management, 
+   authentication, access control, user roles, session and application state, 
+   declarative configuration and logging, all of which are reflected in the Lisplet 
+   API.  In addition to the convenience, this means that Lisp application servers 
+   can interoperate with Java Server Pages, Java Servlets and other Java-based web 
+   technologies in a single web application.
+	</p>
+
+
+	<a name="download"></a> <h3>Download</h3>
+
+	<p>
+	The <a href="http://sourceforge.net/projects/lisplets/">Lisplets project</a> is 
+	hosted on SourceForge <a href="http://sourceforge.net"><img src="http://sourceforge.net/sflogo.php?group_id=120146&amp;type=1"
+					width="88" height="31" border="0" alt="SourceForge.net Logo" /></a>
+	</p>
+
+	<a name="setup"></a> <h3>Setup and Configuration</h3>
+
+	<p>
+	The Lisplet servlet is supplied as a single classfile: com/richhickey/lisplets/Lisplet.class. 
+	While a full description of web app deployment is beyond the scope of this 
+	document, the basic idea is to set up either a directory or .WAR file that 
+	contains a <code>WEB-INF</code> directory. In the <code>WEB-INF</code> directory 
+	should be a <code>web.xml</code> file that contains the application 
+	configuration, (a <a href="../WEB-INF/web.xml">sample web.xml file</a> is 
+	included), and a <code>WEB-INF/classes/</code> directory, into which the entire 
+	path <code>com/richhickey/lisplets/Lisplet.class</code> should be placed.
+	</p>
+	<p>
+	All requests to URIs matching the pattern specified in the <code>servlet-mapping</code> 
+	section of web.xml will be routed to the Lisplet and thus to the host and port 
+	specified by the lisp-host and lisp-port init-params. If you are unfamiliar with 
+	servlets I recommend you install <a href="http://jakarta.apache.org/tomcat/index.html">Tomcat</a> 
+	and read their documentation.
+	</p>
+
+	<a name="quickstart"></a> <h3>Quick Start</h3> 
+	<p>
+	Once you have a directory structure or .WAR file you need to follow the 
+	instructions of your servlet container implementation for deploying the web app.  
+	This may require copying the directory or .WAR file and/or restarting the 
+	servlet container.  Tomcat 5, with which I developed Lisplets, has a nice HTTP 
+	front end for their management utility that let you deploy from the browser 
+	without restarting Tomcat.  
+	</p>
+
+	<p>
+	At this point, all you need is a Lisp/Scheme process to service the requests.  
+	The request is sent as a single s-expression.  The reply must be a single s-expression 
+	containing headers etc, followed by the body content, in any form, which will be 
+	transferred byte-for-byte to the client. Close the socket to conclude the 
+	response.  Here is a sample server that simply pretty-prints the request it 
+	received as the body of the response.  It was written for Xanalys <a href="http://www.lispworks.com/">LispWorks</a>, 
+	and the socket and process portion will need to be modified for your specific 
+	Lisp/socket implementation: 
+	</p>
+
+	<pre>
+(require "comm")
+
+(defvar *lisplet-port* 13579) ; a free TCP port number
+
+(defun make-lisplet-stream (handle)
+  (let ((stream (make-instance 'comm:socket-stream
+                               :socket handle
+                               :direction :io
+                               :element-type 'base-char)))
+    (mp:process-run-function (format nil "lisplet ~D"
+                                     handle)
+                             '()
+                             'handle-lisplet-on-stream stream)))
+
+(defun handle-lisplet-on-stream (stream)
+  (unwind-protect
+      (let ((req (read stream)))
+        ;set something in the return header
+        (format stream "~S"
+                `((:status 200)
+                  (:headers
+                   (:content-type "text/plain"))
+                  (:cookies
+                   ((:name "lisp-cookie")
+                    (:value ,(second (assoc :uri req)))))
+                  (:session
+                   (:max-inactive-interval 60)
+                   (:attrs
+                    (:fred "ethel")
+                    (:lucy "ricky")))
+                  (:context
+                   (:attrs
+                    (:com.richhickey.foo "bar")))
+                  (:log "Hello from Lisp")))
+        ;echo the request as the body
+        (pprint req stream)
+        (force-output stream)
+        (close stream))))
+
+(comm:start-up-server :function 'make-lisplet-stream
+                      :service *lisplet-port*)
+	</pre>
+
+	<p>
+	When run under Tomcat (with an authenticated user) this produces a page like 
+	this (i.e., this is what is being sent to Lisp):
+	</p>
+	<pre>
+((:METHOD "GET")
+ (:URI "/lisplets/test.do")
+ (:PROTOCOL "HTTP/1.1")
+ (:IS-SECURE NIL)
+ (:HEADERS
+  (:HOST "127.0.0.1:8080")
+  (:USER-AGENT
+   "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.6) Gecko/20040113")
+  (:ACCEPT
+   "application/x-shockwave-flash,text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,image/jpeg,image/gif;q=0.2,*/*;q=0.1")
+  (:ACCEPT-LANGUAGE "en-us,en;q=0.5")
+  (:ACCEPT-ENCODING "gzip,deflate")
+  (:ACCEPT-CHARSET "ISO-8859-1,utf-8;q=0.7,*;q=0.7")
+  (:KEEP-ALIVE "300")
+  (:CONNECTION "keep-alive")
+  (:AUTHORIZATION "Basic YWRtaW46aW50YWN0"))
+ (:COOKIES
+  (:LISP-COOKIE "/lisplets/test.do")
+  (:JSESSIONID "8D1036E516561CC1A8A146916591BAD4"))
+ (:PARAMS (:FRED "ethel"))
+ (:CONTEXT
+  (:NAME "Lisplets Test")
+  (:PARAMS (:A-CONTEXT-PARAM "lisplet-context-param"))
+  (:ATTRS
+   (:JAVAX.SERVLET.CONTEXT.TEMPDIR
+    "C:\\Program Files\\Apache Software Foundation\\Tomcat 5.0\\work\\Catalina\\localhost\\lisplets")
+   (:ORG.APACHE.CATALINA.RESOURCES
+    "org.apache.naming.resources.ProxyDirContext@17e4dee")
+   (:ORG.APACHE.CATALINA.WELCOME_FILES "[Ljava.lang.String;@12e7c6a")))
+ (:SERVLET
+  (:NAME "lisplet")
+  (:PARAMS
+   (:LISP-ROLES "role1,tomcat,admin")
+   (:SAMPLE-USER-PARAM "a param")
+   (:LISP-CREATE-SESSION "true")
+   (:LISP-TAG-PREFIX ":")
+   (:LISP-PORT "13579")
+   (:LISP-HOST "localhost")))
+ (:SESSION
+  (:ID "566E6A3F88B70901B68B2AB0420D84E6")
+  (:IS-NEW T)
+  (:CREATION-TIME 1096421920743)
+  (:LAST-ACCESSED-TIME 1096421920743)
+  (:MAX-INACTIVE-INTERVAL 1800))
+ (:USER
+  (:NAME "admin")
+  (:AUTH-TYPE "BASIC")
+  (:ROLES (:ROLE1 T) (:TOMCAT T) (:ADMIN T))))
+	</pre>
+
+	<p>
+	Hopefully that looks simple and natural to a Lisp developer.
+	</p>
+
+	<a name="api"></a> <h2>API Reference</h2>
+
+	<a name="webxml"></a> <h3>web.xml Parameters</h3> Several init-params are used 
+	to configure the operation of the Lisplet servlet. <code>lisp-host</code> and <code>lisp-port</code> 
+	are required, all others are optional.
+	<ul>
+		<li>
+			<strong>lisp-host</strong>
+			<p>
+			A string. The host to which the socket connection will be made. Default: none
+			</p>
+		</li>
+		<li>
+			<strong>lisp-port</strong>
+			<p>
+			An integer. The port to which the socket connection will be made. Default: none
+			</p>
+		</li>
+		<li>
+			<strong>lisp-tag-prefix</strong>
+			<p>
+			A string. This string will be prepended to all 'tags', which means header, init-param, 
+			attribute, cookie and param names. For example, specifying a prefix of : will 
+			cause those names to appear as keywords to Common Lisp. The prefix works in both 
+			directions, meaning 'tags' sent from Lisp to Java will have this prefix removed 
+			before being used as header, cookie etc names. Default: none
+			</p>
+		</li>
+
+		<li>
+			<strong>lisp-tag-suffix</strong>
+			<p>
+			A string. This string will be appended to all 'tags', which means header, init-param, 
+			attribute, cookie and param names. The suffix works only one way (Java to Lisp), 
+			and the only conceived-of use at this time is to specify a prefix and suffix of 
+			" in order to have tags sent to Lisp as strings (vs. symbols). Default: none
+			</p>
+		</li>
+
+		<li>
+			<strong>lisp-create-session</strong>
+			<p>
+			true or false. If true, the Lisplet will create a session if none exists. 
+			Default: false
+			</p>
+		</li>
+		<a name="lisproles"></a>
+		<li>
+			<strong>lisp-roles</strong>
+			<p>
+			A comma-separated list of role names. If authentication is configured and the 
+			user is logged in, the Lisplet will inquire of the user's membership in the 
+			listed roles. Authorization and roles must be configured in the standard manner 
+			in the web.xml file. See the documentation for your servlet container for your 
+			options for a user and role database. Tomcat lets you get a quick start by using 
+			a simple xml file. Default: none
+			</p>
+		</li>
+
+		<a name="lisptrue"></a>
+		<li>
+			<strong>lisp-true</strong>
+			<p>
+			A string. The symbol to use to communicate true to/from Lisp. Default: t
+			</p>
+		</li>
+
+		<a name="lispfalse"></a>
+		<li>
+			<strong>lisp-false</strong>
+			<p>
+			A string. The symbol to use to communicate false to/from Lisp. Default: nil
+			</p>
+		</li>
+
+		<a name="lispnull"></a>
+		<li>
+			<strong>lisp-null</strong>
+			<p>
+			A string. The symbol to use to communicate null to/from Lisp. Default: nil
+			</p>
+		</li>
+	</ul>
+
+
+
+	<a name="request"></a> <h3>Request Format</h3> All information about the request 
+	is sent in a single list. All members of that list are themselves lists, each 
+	beginning with a tag. The top-level entries are:
+	<ul>
+		<li>
+			(<code>method</code> a-string)
+		</li>
+		<li>
+			(<code>uri</code> a-string)
+		</li>
+		<li>
+			(<code>protocol</code> a-string)
+		</li>
+		<li>
+			(<code>is-secure</code> a-boolean)
+		</li>
+		<li>
+			(<code>headers</code> 
+			<ul>
+				<li>
+					(name value ...) ...)
+				</li>
+			</ul>
+		</li>
+		<li>
+			(<code>cookies</code> 
+			<ul>
+				<li>
+					(name value) ...)
+				</li>
+			</ul>
+		</li>
+		<li>
+			(<code>params</code> 
+			<ul>
+				<li>
+					(name value ...) ...)
+				</li>
+			</ul>
+		</li>
+		<li>
+			(<code>context</code> 
+			<ul>
+				<li>
+					(<code>name</code> a-string)
+				</li>
+				<li>
+					(<code>params</code> (name value) ...)
+				</li>
+				<li>
+					(<code>attrs</code> (name value) ...))
+				</li>
+			</ul>
+		</li>
+		<li>
+			(<code>servlet</code> 
+			<ul>
+				<li>
+					(<code>name</code> a-string)
+				</li>
+				<li>
+					(<code>params</code> (name value) ...))
+				</li>
+			</ul>
+		</li>
+		<li>
+			(<code>session</code> <br>
+			<ul>
+				<li>
+					(<code>id</code> a-string) 
+				</li>
+				<li>
+					(<code>is-new</code> a-boolean) 
+				</li>
+				<li>
+					(<code>creation-time</code> an-int) 
+				</li>
+				<li>
+					(<code>last-accessed-time</code> an-int) 
+				</li>
+				<li>
+					(<code>max-inactive-interval</code> an-int) 
+				</li>
+				<li>
+					(<code>attrs</code> (name value) ...))
+				</li>
+			</ul>
+		<li>
+			(<code>user</code> 
+			<ul>
+				<li>
+					(<code>name</code> a-string)
+				</li>
+				<li>
+					(<code>auth-type</code> a-string)
+				</li>
+				<li>
+					(<code>roles</code> (name a-boolean) ...))
+				</li>
+			</ul>
+		</li>
+	</ul>
+	<p>
+	The entries are not guaranteed to come in any particular order, nor are they all 
+	guaranteed to be present. Basically, if there is nothing to send the entry is 
+	omitted, e.g. if the user is not logged in there is no user entry, if there is 
+	no session there will be no session entry, no cookies, no cookie entry etc. 
+	Unless otherwise specified, strings have been URL-decoded. Strings are sent as " - 
+	quoted literals. Only " and \ are escaped, by prefixing with \
+	</p>
+	<p>
+	<h4>method, uri, protocol and is-secure</h4> The result of <a href="http://java.sun.com/j2ee/1.4/docs/api/javax/servlet/http/HttpServletRequest.html#getMethod()">getMethod()</a>,
+	<a href="http://java.sun.com/j2ee/1.4/docs/api/javax/servlet/http/HttpServletRequest.html#getRequestURI()">getRequestURI()</a>,
+	<a href="http://java.sun.com/j2ee/1.4/docs/api/javax/servlet/ServletRequest.html#getProtocol()">getProtocol()</a> 
+	and <a href="http://java.sun.com/j2ee/1.4/docs/api/javax/servlet/ServletRequest.html#isSecure()">isSecure()</a> 
+	respectively. Only the GET and POST methods are currently supported.
+	</p>
+	<p>
+	<h4>headers</h4> All of the http headers are included except any cookies, which 
+	are in a separate section. Note that a header may have multiple values.
+	</p>
+
+	<p>
+	<h4>cookies</h4> All of the cookies are included. Note that this is asymmetric 
+	vs the response cookie format, which allows you to set a comment, domain, path 
+	etc. While these other cookie attributes can be <em>sent</em> to a client, they 
+	are not returned.
+	</p>
+
+	<p>
+	<h4>params</h4> All of the query parameters, either from the query string or 
+	posted form data, are included. Note that a parameter may have multiple values.
+	</p>
+
+	<p>
+	<h4>context</h4> The nested entries are:
+	<ul>
+		<li>
+			<strong>name</strong> The application context name as specified by the <code>display-name</code> 
+			entry in <code>web.xml</code>.
+		</li>
+		<li>
+			<strong>params</strong> The context-wide init params. 
+		</li>
+		<li>
+			<strong>attrs</strong> The context-wide dynamic attributes.
+		</li>
+	</ul>
+	</p>
+
+	<p>
+	<h4>servlet</h4> The nested entries are:
+	<ul>
+		<li>
+			<strong>name</strong> The servlet name as specified by the <code>servlet-name</code> 
+			entry in <code>web.xml</code>.
+		</li>
+		<li>
+			<strong>params</strong> The servlet init-params.
+		</li>
+	</ul>
+	</p>
+
+	<p>
+	<h4>session</h4> The nested entries are:
+	<ul>
+		<li>
+			<strong>id, is-new, creation-time, last-accessed-time, max-inactive-interval</strong> 
+			The result of <a href="http://java.sun.com/j2ee/1.4/docs/api/javax/servlet/http/HttpSession.html#getId()">getId()</a>,
+			<a href="http://java.sun.com/j2ee/1.4/docs/api/javax/servlet/http/HttpSession.html#isNew()">isNew()</a>,
+			<a href="http://java.sun.com/j2ee/1.4/docs/api/javax/servlet/http/HttpSession.html#getCreationTime()">getCreationTime()</a>,
+			<a href="http://java.sun.com/j2ee/1.4/docs/api/javax/servlet/http/HttpSession.html#getLastAccessedTime()" >getLastAccessedTime()</a>, 
+			and <a href="http://java.sun.com/j2ee/1.4/docs/api/javax/servlet/http/HttpSession.html#getMaxInactiveInterval()">getMaxInactiveInterval()</a> 
+			respectively.
+		</li>
+		<li>
+			<strong>attrs</strong> The session's dynamic attributes.
+		</li>
+	</ul>
+	</p>
+
+	<p>
+	<h4>user</h4> The nested entries are:
+	<ul>
+		<li>
+			<strong>name</strong> The user name.
+		</li>
+		<li>
+			<strong>auth-type</strong> The authentication type as per <a href="http://java.sun.com/j2ee/1.4/docs/api/javax/servlet/http/HttpServletRequest.html#getAuthType()">getAuthType()</a>. 
+			Note that if the user is not authenticated there will be no <code>user</code> 
+			section.
+		</li>
+		<li>
+			<strong>roles</strong> There will be one entry per role listed in the <a href="#lisproles">
+			<code>lisp-roles</code></a> servlet init parameter.
+		</li>
+	</ul>
+	</p>
+
+	<a name="response"></a> <h3>Response Format</h3>
+	<p>
+	The response consists of two parts, an s-expression containing header, cookie 
+	and other directives to the servlet, followed by the body. Even if you have no 
+	headers etc to send (there are several defaults, e.g. Status 200), you must send 
+	at least the empty list (). The response header s-expression is read by a very 
+	simplistic reader on the Java side. The reader uses only (, ), and whitespace as 
+	delimiters. It can read " - quoted string literals, and will interpret only \" 
+	and \\ escapes in string literals. It can read nested lists. Anything other than 
+	a list or string literal will be read in as a whitespace/paren delimited string. 
+	If a value needs to be treated as a string, it will be compared to the <a href="#lispnull">
+	<code>lisp-null</code></a> string, and, if it matches, <code>null</code> will be 
+	used, otherwise, with no translation other than URL-encoding, if necessary. If the value needs to be treated as a 
+	number, <a href="http://java.sun.com/j2se/1.4.2/docs/api/java/lang/Integer.html#parseInt(java.lang.String)">Integer.parseInt()</a> 
+	will be used. If it needs to be treated as a boolean, it will be compared to the <a href="#lisptrue">
+	<code>lisp-true</code></a> string, and the result of that comparison will be 
+	used.
+	</p>
+	<p>
+	All information about the response is sent in a single list. All members of that 
+	list are themselves lists, each beginning with a tag. The top-level entries are:
+	<ul>
+		<li>
+			(<code>status</code> an-int)
+		</li>
+		<li>
+			(<code>error</code> an-int [a-message-string])
+		</li>
+		<li>
+			(<code>redirect</code> a-location-URL)
+		</li>
+		<li>
+			(<code>headers</code> 
+			<ul>
+				<li>
+					(name value) ...)
+				</li>
+			</ul>
+		</li>
+		<li>
+			(<code>cookies</code> <br>
+			<ul>
+				<li>
+					((<code>name</code> a-string) (<code>value</code> a-string)<br>
+					[(<code>comment</code> a-string) (<code>domain</code> a-string) (<code>max-age</code> 
+					an-int) (<code>path</code> a-string) (<code>secure</code> a-boolean) (<code>version</code> 
+					an-int)]) ...)
+				</li>
+			</ul>
+		</li>
+		<li>
+			(<code>context</code> 
+			<ul>
+				<li>
+					(<code>attrs</code> (name value) ...))
+				</li>
+			</ul>
+		</li>
+		<li>
+			(<code>session</code> <br>
+			<ul>
+
+				<li>
+					(<code>invalidate</code>) 
+				</li>
+				<li>
+					(<code>max-inactive-interval</code> an-int) 
+				</li>
+				<li>
+					(<code>attrs</code> (name value) ...))
+				</li>
+			</ul>
+		</li>
+		<li>
+			(<code>log</code> a-string ...)
+		</li>
+	</ul>
+	All top-level entries are optional, and may appear in any order, but <em>not 
+	more than once</em>.
+	</p>
+	<p> <h4>status, error, redirect</h4> These result in calls to 
+	<a href="http://java.sun.com/j2ee/1.4/docs/api/javax/servlet/http/HttpServletResponse.html#setStatus(int)">setStatus()</a>,
+	<a href="http://java.sun.com/j2ee/1.4/docs/api/javax/servlet/http/HttpServletResponse.html#sendError(int,%20java.lang.String)">sendError()</a>,
+	<a href="http://java.sun.com/j2ee/1.4/docs/api/javax/servlet/http/HttpServletResponse.html#sendRedirect(java.lang.String)">sendRedirect()</a> respectively.
+	<em>Only one of these should be sent.</em> <code>error</code> and <code>redirect</code> will 
+	cause the rest of the response to be ignored. If none of these are sent, the status defaults to 200 (Ok).
+	</p>
+		<p>
+	<h4>headers</h4> Any standard http headers except cookies, which are more conveniently sent with a cookies entry.
+	</p>
+<p>
+<h4>cookies</h4> Each cookie is a list, with the following entries:
+<ul>
+	<li><strong>name</strong> (required)</li>
+	<li><strong>value</strong> (required)</li>
+	<li><strong>comment</strong></li>
+	<li><strong>domain</strong></li>
+	<li><strong>max-age</strong></li>
+	<li><strong>path</strong></li>
+	<li><strong>secure</strong></li>
+	<li><strong>version</strong></li>
+</ul>
+See <a href="http://java.sun.com/j2ee/1.4/docs/api/javax/servlet/http/Cookie.html">
+the documentation for the Cookie class</a> for descriptions of these attributes.
+</p>
+<p>
+	<h4>context</h4> The nested entries are:
+	<ul>
+		<li>
+			<strong>attrs</strong> Any context-wide dynamic attributes you wish to set. It need not be a complete set.
+			 nil (or whatever string is <code>lisp-null</code>) 
+			is a possible value for an attribute, in which case the attribute will be removed (i.e. it is not null, it is gone).
+		</li>
+	</ul>
+	</p>
+<p>
+	<h4>session</h4> The nested entries are:
+	<ul>
+		<li><strong>invalidate</strong> This entry will remove the session entirely.</li>
+		<li><strong>max-inactive-interval</strong> The session timeout interval, in seconds</li>
+		<li>
+			<strong>attrs</strong> Any session-wide dynamic attributes you wish to set. It need not be a complete set.
+			 nil (or whatever string is <code>lisp-null</code>) 
+			is a possible value for an attribute, in which case the attribute will be removed (i.e. it is not null, it is gone).
+		</li>
+	</ul>
+	Note that if max-inactive-interval or any attrs are specified, a session will be created if one does not exist, regardless of the setting 
+	of lisp-create-session.
+	</p>
+		<p>
+	<h4>log</h4> Each string will be sent to <a href="http://java.sun.com/j2ee/1.4/docs/api/javax/servlet/ServletContext.html#log(java.lang.String)">log()</a>.
+	</p>
+
+
+	<a name="summary"></a> <h3>Summary</h3>
+	<p>This first version of Lisplets supports only standard gets with query-strings and form-style posts. Future plans include support for custom posts,
+	and socket keep-alive between the Java servlet and Lisp.</p>
+	<p>
+	I hope you find Lisplets useful.  I welcome comments and code contributions.
+	</p>
+	<p>
+	<strong><em>Rich Hickey, September 2004</em></strong>
+	</p>
+	</body>
+</html>
