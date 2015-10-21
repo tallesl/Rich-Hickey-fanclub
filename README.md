@@ -72,10 +72,12 @@ Transcripts of some of his talks can be found on [matthiasn/talk-transcripts](ht
 
 ## Interviews
 
-* [Rich Hickey and core.async - Podcast Episode 035 (Jul 2013)](http://thinkrelevance.com/blog/2013/07/10/rich-hickey-and-core-async-podcast-episode-035)
+* [Rich Hickey and core.async (Jul 2013)](http://blog.cognitect.com/cognicast/035-rich-hickey-and-coreasync)
 * [Rich Hickey on Datomic, CAP and ACID (Jan 2013)](http://infoq.com/interviews/hickey-datomic-cap)
+* [Rich Hickey on codeq (Oct 2012)](http://blog.cognitect.com/cognicast/019-rich-hickey-codeq)
 * [Rich Hickey on Datomic, Data Storage, Functional Programming and Immutability (Sep 2012)](http://infoq.com/interviews/hickey-datomic-functional)
 * [Expert to Expert: Erik Meijer and Rich Hickey - Clojure and Datomic (Aug 2012)](https://channel9.msdn.com/posts/Expert-to-Expert-Erik-Meijer-and-Rich-Hickey-Clojure-and-Datomic)
+* [Rich Hickey (Jul 2012)](http://blog.cognitect.com/cognicast/014-rich-hickey)
 * [Rich Hickey on Clojure 1.4's Extensible Reader, ClojureScript (Apr 2012)](http://infoq.com/interviews/hickey-clojure-reader)
 * [Rich Hickey on Datomic: Datalog, Databases, Persistent Data Structures (Apr 2012)](http://infoq.com/interviews/hickey-datomic)
 * [Clojure inventor Hickey now aims for Android (Mar 2012)](http://infoworld.com/article/2619641/java/clojure-inventor-hickey-now-aims-for-android.html)
