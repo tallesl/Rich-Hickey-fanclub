@@ -23,10 +23,12 @@ He also made other not well know [lisps prior to Clojure](lisps).
 * [Hacker News](https://news.ycombinator.com/user?id=richhickey)
 * [Reddit](https://reddit.com/user/richhickey)
 * [Lambda the Ultimate](http://lambda-the-ultimate.org/user/4980)
-* [Disqus](https://disqus.com/by/richhickey/comments)
+* [Disqus](https://disqus.com/by/richhickey) \*
 * [Google+](https://plus.google.com/+RichHickey)
 * [Amazon](http://amazon.com/lm/R3LG3ZBZS4GCTH)
 * [SourceForge](http://sourceforge.net/u/rhickey/profile)
+
+\* Unfortunately, some comments aren't being shown on his user page ([such as this one](http://jasonrudolph.com/blog/2011/08/09/programming-achievements-how-to-level-up-as-a-developer/#comment-287120251)).
 
 ## Talks
 
