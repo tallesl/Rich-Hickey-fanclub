@@ -12,7 +12,7 @@
 * [Datomic](http://datomic.com)
 * [Harmonikit](https://github.com/richhickey/harmonikit)
 
-He also made other not well know [lisps prior to Clojure](lisps).
+He also made other not well known [lisps prior to Clojure](lisps).
 
 ## On the internet
 
