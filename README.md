@@ -8,8 +8,8 @@
 
 ## Work
 
-* [Clojure](http://clojure.org)
-* [Datomic](http://datomic.com)
+* [Clojure](https://github.com/clojure)
+* [Datomic](https://github.com/Datomic)
 * [Harmonikit](https://github.com/richhickey/harmonikit)
 
 He also made other not as well known [lisps prior to Clojure](lisps).
