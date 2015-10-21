@@ -30,6 +30,7 @@ He also made other not well know [lisps prior to Clojure](lisps).
 
 ## Talks
 
+* [Clojure Made Simple (Jun 2015)](https://youtube.com/watch?v=VSdnJDO-xdg)
 * [Inside Transducers (Nov 2014)](https://youtube.com/watch?v=4KqUvG8HPYo)
 * [Core.async - Communicating Sequential Processes using Channels, in Clojure (Jan 2014)](http://infoq.com/presentations/core-async-clojure)
 * [Harmonikit (Jan 2014)](https://youtube.com/watch?v=bhkdyCPYgLs)
