@@ -93,7 +93,7 @@ Transcripts of some of his talks can be found on [matthiasn/talk-transcripts](ht
 
 ## Writings
 
-You can find some writings about Clojure on the [Clojure blog](http://clojure.com/blog) and a couple about Datomic on [InfoQ](http://infoq.com/author/Rich-Hickey#Articles).
+You can find a few on [Clojure blog](http://clojure.com/blog), [Cognitect blog](http://blog.cognitect.com/?author=53b41822e4b03d3e9732635e), and [InfoQ](http://infoq.com/author/Rich-Hickey#Articles).
 
 There's also an old paper (1994) on C++: [Callbacks in C++ using template functors](http://tutok.sk/fastgl/callback.html).
 He made some comments on it in [an interview](http://codequarterly.com/2011/rich-hickey) years later:
