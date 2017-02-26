@@ -112,7 +112,7 @@ He made some comments on it in [an interview](http://codequarterly.com/2011/rich
 
 Here are some people comments on Hickey's work.
 
-* [How rich is Rich Hickey? (Jul 2014)](http://bepsays.com/2014/07/08/how-rich-is-rich-hickey)
+* [How rich is Rich Hickey? (Jul 2014)](http://bepsays.com/en/2014/07/08/how-rich-is-rich-hickey/)
 * [Rich Hickey’s Greatest Hits (Sep 2013)](https://changelog.com/rich-hickeys-greatest-hits)
 * [In Retrospect: QCon NYC 2013 (and a conversation with Rich Hickey on languages) (Jul 2013)](http://richardminerich.com/2013/07/in-retrospect-qcon-nyc-2013-and-a-conversation-with-rich-hickey-on-languages)
 * [The Unofficial Guide to Rich Hickey's Brain (Dec 2012)](http://flyingmachinestudios.com/programming/the-unofficial-guide-to-rich-hickeys-brain)
