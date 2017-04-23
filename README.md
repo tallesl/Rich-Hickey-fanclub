@@ -84,7 +84,7 @@ Transcripts of some of his talks can be found on [matthiasn/talk-transcripts](ht
 * [Rich Hickey on Datomic: Datalog, Databases, Persistent Data Structures (Apr 2012)](http://infoq.com/interviews/hickey-datomic)
 * [Clojure inventor Hickey now aims for Android (Mar 2012)](http://infoworld.com/article/2619641/java/clojure-inventor-hickey-now-aims-for-android.html)
 * [(first (rich-hickey)) (Jun 2011)](http://blog.fogus.me/2011/06/09/first-rich-hickey)
-* [Rich Hickey Q&A (2011)](http://codequarterly.com/2011/rich-hickey)
+* [Rich Hickey Q&A (2011)](https://web.archive.org/web/20110614145543/http://codequarterly.com/2011/rich-hickey)
 * [Rich Hickey on Protocols and Clojure 1.3 (Dec 2010)](http://infoq.com/interviews/hickey-clojure-protocols)
 * [ELC 2010: Rich Hickey and Joe Pamer - Perspectives on Clojure and F# (Aug 2010)](https://channel9.msdn.com/blogs/charles/emerging-langs-clojure-and-f)
 * [Economy Size Geek - Interview with Rich Hickey, Creator of Clojure (Apr 2010)](http://linuxjournal.com/article/10708)
@@ -98,7 +98,7 @@ Transcripts of some of his talks can be found on [matthiasn/talk-transcripts](ht
 You can find a few on [Clojure blog](http://clojure.com/blog), [Cognitect blog](http://blog.cognitect.com/?author=53b41822e4b03d3e9732635e), and [InfoQ](http://infoq.com/author/Rich-Hickey#Articles).
 
 There's also an old paper (1994) on C++: [Callbacks in C++ using template functors](http://tutok.sk/fastgl/callback.html).
-He made some comments on it in [an interview](http://codequarterly.com/2011/rich-hickey) years later:
+He made some comments on it in [an interview](https://web.archive.org/web/20110614145543/http://codequarterly.com/2011/rich-hickey) years later:
 
 > Fogus: In an old paper of yours, “Callbacks in C++ Using Template Functors”, you write favorably about C++, OOP, and static typing. Why did you change your mind?
 > 
