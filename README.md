@@ -11,6 +11,7 @@
 * [Clojure](https://github.com/clojure)
 * [Datomic](https://github.com/Datomic)
 * [Harmonikit](https://github.com/richhickey/harmonikit)
+* [Codeq](https://github.com/Datomic/codeq)
 
 He also made other not as well known [lisps prior to Clojure](lisps).
 
