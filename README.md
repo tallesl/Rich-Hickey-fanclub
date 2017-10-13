@@ -32,6 +32,7 @@ He also made other not as well known [lisps prior to Clojure](lisps).
 
 ## Talks
 
+* [Effective Programs - 10 Years of Clojure (Oct 2017)](https://www.youtube.com/watch?v=2V1FtfBDsLU)
 * [Spec-ulation Keynote (Dec 2016)](https://www.youtube.com/watch?v=oyLBGkS5ICk)
 * [On clojure.spec (Nov 2016)](https://vimeo.com/195711510)
 * [Clojure Made Simple (Jun 2015)](https://youtube.com/watch?v=VSdnJDO-xdg)
