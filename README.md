@@ -75,6 +75,7 @@ He also made other not as well known [lisps prior to Clojure](lisps).
 Transcripts of some of his talks can be found on [matthiasn/talk-transcripts](https://github.com/matthiasn/talk-transcripts/blob/master/Hickey_Rich/README.md).
 
 ## Interviews
+* [Problem Solving and Clojure 1.9 with Rich Hickey (May 2018)](http://www.case-podcast.org/20-problem-solving-and-clojure-19-with-rich-hickey)
 * [clojure.spec with Rich Hickey (Jun 2016)](http://blog.cognitect.com/cognicast/103)
 * [Rich Hickey and core.async (Jul 2013)](http://blog.cognitect.com/cognicast/035-rich-hickey-and-coreasync)
 * [Rich Hickey on Datomic, CAP and ACID (Jan 2013)](http://infoq.com/interviews/hickey-datomic-cap)
