@@ -31,7 +31,7 @@ He also made other not as well known [lisps prior to Clojure](lisps).
 \* Unfortunately, some comments aren't being shown on his user page ([such as this one](http://jasonrudolph.com/blog/2011/08/09/programming-achievements-how-to-level-up-as-a-developer/#comment-287120251)).
 
 ## Talks
-
+* [Maybe Not (Nov 2018)](https://www.youtube.com/watch?v=YR5WdGrpoug)
 * [Rich Hickey on Datomic Ions (Sep 2018)](https://www.youtube.com/watch?v=thpzXjmYyGk)
 * [Effective Programs - 10 Years of Clojure (Oct 2017)](https://www.youtube.com/watch?v=2V1FtfBDsLU)
 * [Spec-ulation Keynote (Dec 2016)](https://www.youtube.com/watch?v=oyLBGkS5ICk)
