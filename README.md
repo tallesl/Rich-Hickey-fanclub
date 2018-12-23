@@ -17,6 +17,7 @@ He also made other not as well known [lisps prior to Clojure](lisps).
 ## On the internet
 
 * [GitHub](https://github.com/richhickey)
+* [Gists](https://gist.github.com/richhickey)
 * [Twitter](https://twitter.com/richhickey)
 * [LinkedIn](https://linkedin.com/in/richhickey)
 * [Clojure mailing list](https://groups.google.com/forum/#!searchin/clojure/authorname$3A%22Rich$20Hickey%22)
@@ -78,6 +79,7 @@ He also made other not as well known [lisps prior to Clojure](lisps).
 Transcripts of some of his talks can be found on [matthiasn/talk-transcripts](https://github.com/matthiasn/talk-transcripts/blob/master/Hickey_Rich/README.md).
 
 ## Interviews
+
 * [Problem Solving and Clojure 1.9 with Rich Hickey (May 2018)](http://www.case-podcast.org/20-problem-solving-and-clojure-19-with-rich-hickey)
 * [clojure.spec with Rich Hickey (Jun 2016)](http://blog.cognitect.com/cognicast/103)
 * [Rich Hickey and core.async (Jul 2013)](http://blog.cognitect.com/cognicast/035-rich-hickey-and-coreasync)
@@ -101,9 +103,9 @@ Transcripts of some of his talks can be found on [matthiasn/talk-transcripts](ht
 
 ## Writings
 
-You can find a few on [Clojure blog](http://clojure.com/blog), [Cognitect blog](http://blog.cognitect.com/?author=53b41822e4b03d3e9732635e), and [InfoQ](http://infoq.com/author/Rich-Hickey#Articles).
+You can find a few on [Clojure blog](http://clojure.com/blog), [Cognitect blog](http://blog.cognitect.com/?author=53b41822e4b03d3e9732635e), and [InfoQ](http://infoq.com/author/Rich-Hickey#Articles). He also wrote about how [Open Source it Not About You](https://gist.github.com/richhickey/1563cddea1002958f96e7ba9519972d9) ([comments](https://news.ycombinator.com/item?id=18538123)).
 
-There's also an old paper (1994) on C++: [Callbacks in C++ using template functors](http://tutok.sk/fastgl/callback.html).
+There's an old paper (1994) on C++: [Callbacks in C++ using template functors](http://tutok.sk/fastgl/callback.html).
 He made some comments on it in [an interview](https://web.archive.org/web/20110614145543/http://codequarterly.com/2011/rich-hickey) years later:
 
 > Fogus: In an old paper of yours, “Callbacks in C++ Using Template Functors”, you write favorably about C++, OOP, and static typing. Why did you change your mind?
