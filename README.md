@@ -74,7 +74,7 @@ He also made other not as well known [lisps prior to Clojure](lisps).
 * [Clojure for Lisp Programmers Part 2 (Sep 2008)](https://youtube.com/watch?v=7mbcYxHO0nM)
 * [Clojure for Java Programmers Part 1 (Jun 2008)](https://youtube.com/watch?v=P76Vbsk_3J0)
 * [Clojure for Java Programmers Part 2 (Jun 2008)](https://youtube.com/watch?v=hb3rurFxrZ8)
-* [Clojure Concurrency (Mar 2008)](https://youtube.com/watch?v=dGVqrGmwOAw)
+* [Clojure Concurrency (Mar 2008)](https://youtube.com/watch?v=dGVqrGmwOAw) [with slides](https://www.youtube.com/watch?v=nDAfZK8m5_8)
 
 Transcripts of some of his talks can be found on [matthiasn/talk-transcripts](https://github.com/matthiasn/talk-transcripts/blob/master/Hickey_Rich/README.md).
 
