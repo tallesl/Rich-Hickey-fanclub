@@ -95,6 +95,7 @@ There's also slides from a talk named ["Clojure: What just happened?"](http://ww
 * [(first (rich-hickey)) (Jun 2011)](http://blog.fogus.me/2011/06/09/first-rich-hickey)
 * [Rich Hickey Q&A (2011)](https://web.archive.org/web/20110614145543/http://codequarterly.com/2011/rich-hickey)
 * [Rich Hickey on Protocols and Clojure 1.3 (Dec 2010)](http://infoq.com/interviews/hickey-clojure-protocols)
+* [Computer World: The A-Z of Programming Languages: Clojure (Aug 2010)](https://www.computerworld.com.au/article/313989/a-z_programming_languages_clojure/) [pdf](http://www.math.bas.bg/bantchev/misc/az.pdf)
 * [ELC 2010: Rich Hickey and Joe Pamer - Perspectives on Clojure and F# (Aug 2010)](https://channel9.msdn.com/blogs/charles/emerging-langs-clojure-and-f)
 * [Economy Size Geek - Interview with Rich Hickey, Creator of Clojure (Apr 2010)](http://linuxjournal.com/article/10708)
 * [Episode 158: Rich Hickey on Clojure (Mar 2010)](http://se-radio.net/2010/03/episode-158-rich-hickey-on-clojure)
