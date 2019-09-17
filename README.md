@@ -52,6 +52,7 @@ He also made other not as well known [lisps prior to Clojure](lisps).
 * [Clojure Data Structures Part 2 (Dec 2012)](https://youtube.com/watch?v=sp2Zv7KFQQ0)
 * [The Language of the System (Nov 2012)](https://youtube.com/watch?v=ROor6_NGIWU)
 * [Deconstructing the Database (Nov 2012)](http://infoq.com/presentations/Deconstructing-Database)
+* [Datomic with Rich Hickey (Jul 2012)](https://www.youtube.com/watch?v=9TYfcyvSpEQ)
 * [The Value of Values (Jul 2012)](https://youtube.com/watch?v=-6BsiVyC1kM)
 * [Deconstructing the Database (Jul 2012)](https://youtube.com/watch?v=Cym4TZwTCNU)
 * [Reducers - A Library and Model for Collection Processing (Jun 2012)](https://web.archive.org/web/20160404200630/http://www.infoq.com/presentations/Clojure-Reducers)
