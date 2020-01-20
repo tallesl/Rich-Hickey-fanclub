@@ -86,6 +86,7 @@ There's also slides from a talk named ["Clojure: What just happened?"](http://ww
 * [clojure.spec with Rich Hickey (Jun 2016)](http://blog.cognitect.com/cognicast/103)
 * [Rich Hickey and core.async (Jul 2013)](http://blog.cognitect.com/cognicast/035-rich-hickey-and-coreasync)
 * [Rich Hickey on Datomic, CAP and ACID (Jan 2013)](http://infoq.com/interviews/hickey-datomic-cap)
+* [Interview with Rich Hickey at Tech Mesh 2012 (Dec 2012)](https://www.youtube.com/watch?v=ybRzEcjljnQ)
 * [Rich Hickey on codeq (Oct 2012)](http://blog.cognitect.com/cognicast/019-rich-hickey-codeq)
 * [Rich Hickey on Datomic, Data Storage, Functional Programming and Immutability (Sep 2012)](http://infoq.com/interviews/hickey-datomic-functional)
 * [Expert to Expert: Erik Meijer and Rich Hickey - Clojure and Datomic (Aug 2012)](https://channel9.msdn.com/posts/Expert-to-Expert-Erik-Meijer-and-Rich-Hickey-Clojure-and-Datomic)
