@@ -34,7 +34,7 @@ He also made other not as well known [lisps prior to Clojure](lisps).
 ## Talks
 
 * [Maybe Not (Nov 2018)](https://www.youtube.com/watch?v=YR5WdGrpoug)
-* [Rich Hickey on Datomic Ions (Sep 2018)](https://www.youtube.com/watch?v=thpzXjmYyGk)
+* [Datomic Ions (Sep 2018)](https://www.youtube.com/watch?v=thpzXjmYyGk)
 * [Effective Programs - 10 Years of Clojure (Oct 2017)](https://www.youtube.com/watch?v=2V1FtfBDsLU)
 * [Spec-ulation Keynote (Dec 2016)](https://www.youtube.com/watch?v=oyLBGkS5ICk)
 * [On clojure.spec (Nov 2016)](https://vimeo.com/195711510)
@@ -60,8 +60,8 @@ He also made other not as well known [lisps prior to Clojure](lisps).
 * [Keynote: The Value of Values (May 2012)](http://infoq.com/presentations/Value-Values)
 * [Writing Datomic in Clojure (May 2012)](http://infoq.com/presentations/Datomic)
 * [Reducers (May 2012)](https://vimeo.com/45561411)
-* [Keynote: The Datomic Architecture and Data Model - Rich Hickey (May 2012)](https://vimeo.com/45136212)
-* [Keynote: Simplicity Matters by Rich Hickey (Apr 2012)](https://youtube.com/watch?v=rI8tNMsozo0)
+* [Keynote: The Datomic Architecture and Data Model (May 2012)](https://vimeo.com/45136212)
+* [Keynote: Simplicity Matters (Apr 2012)](https://youtube.com/watch?v=rI8tNMsozo0)
 * [Simple Made Easy (Mar 2012)](http://infoq.com/presentations/Simple-Made-Easy-QCon-London-2012)
 * [The Design of Datomic (Mar 2012)](http://infoq.com/presentations/The-Design-of-Datomic)
 * [Keynote - Areas of Interest for Clojure's Core (Nov 2011)](https://youtube.com/watch?v=I5iNUtrYQSM)
