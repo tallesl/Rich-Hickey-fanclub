@@ -89,6 +89,7 @@ There's also slides from a talk named ["Clojure: What just happened?"](http://ww
 * [Rich Hickey on codeq (Oct 2012)](http://blog.cognitect.com/cognicast/019-rich-hickey-codeq)
 * [Rich Hickey on Datomic, Data Storage, Functional Programming and Immutability (Sep 2012)](http://infoq.com/interviews/hickey-datomic-functional)
 * [Expert to Expert: Erik Meijer and Rich Hickey - Clojure and Datomic (Aug 2012)](https://channel9.msdn.com/posts/Expert-to-Expert-Erik-Meijer-and-Rich-Hickey-Clojure-and-Datomic)
+* [JAXConf 2012 - Rich Hickey, Clojure/Datomic creator (Jul 2012)](https://www.youtube.com/watch?v=wMyIFgxLTLc)
 * [Rich Hickey (Jul 2012)](http://blog.cognitect.com/cognicast/014-rich-hickey)
 * [Rich Hickey on Clojure 1.4's Extensible Reader, ClojureScript (Apr 2012)](http://infoq.com/interviews/hickey-clojure-reader)
 * [Rich Hickey on Datomic: Datalog, Databases, Persistent Data Structures (Apr 2012)](http://infoq.com/interviews/hickey-datomic)
