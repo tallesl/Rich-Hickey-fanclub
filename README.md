@@ -121,6 +121,8 @@ He made some comments on it in [an interview](https://web.archive.org/web/201106
 > 
 > Along the way, I discovered Common Lisp, which was much more flexible, dynamic, simpler, and fast enough, and decided that was how I wanted to program. Finally, with Clojure, that is becoming possible, and practical, for me.
 
+Rich's [A History of Clojure](https://download.clojure.org/papers/clojure-hopl-iv-final.pdf) (2020) was accepted and included in [HOPL-IV](https://hopl4.sigplan.org/). It details history, rationale, process, and people behind Clojure development.
+
 ## Other people
 
 Here are some people comments on Hickey's work.
