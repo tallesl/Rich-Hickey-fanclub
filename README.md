@@ -131,7 +131,7 @@ Here are some people comments on Hickey's work.
 * [The Unofficial Guide to Rich Hickey's Brain (Dec 2012)](http://flyingmachinestudios.com/programming/the-unofficial-guide-to-rich-hickeys-brain)
 * [Rich Hickey  (Oct 2011)](http://martinsprogrammingblog.blogspot.com/2011/10/rich-hickey.html)
 * [Simple Hickey (Oct 2011)](https://blog.8thlight.com/uncle-bob/2011/10/20/Simple-Hickey.html)
-* [Rich Hickey’s hammock-driven development (Jul 2011)](http://tech.myemma.com/rich-hickeys-hammock-driven-development)
+* [Rich Hickey’s hammock-driven development (Jul 2011)](https://web.archive.org/web/20180302095757/http://tech.myemma.com/rich-hickeys-hammock-driven-development)
 * [Rich Hickey on Clojure (SE Radio) (Jun 2010)](http://whiley.org/2010/06/23/rich-hickey-on-clojure-se-radio)
 * [People Who Make Me Feel Stupid: Rich Hickey (Mar 2010)](http://littlehart.net/atthekeyboard/2010/03/03/people-who-make-me-feel-stupid-rich-hickey)
 * [Rich Hickey on Clojure at LJC (Mar 2009)](http://alittlemadness.com/2009/03/17/rich-hickey-on-clojure-at-ljc)
