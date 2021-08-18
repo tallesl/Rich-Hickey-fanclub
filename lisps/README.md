@@ -1,4 +1,4 @@
-Those are the lisps and lisp-related projects developed by Rich Hickey prior to [Clojure](http://clojure.com):
+Those are the lisps and lisp-related projects developed by Rich Hickey prior to [Clojure](http://clojure.org):
 
  * DotLisp ([landpage](https://rawgit.com/tallesl/Rich-Hickey-fanclub/master/lisps/DotLisp/landpage/dotlisp.sourceforge.net.html), [source](DotLisp/source))
  * Lisplets ([landpage](https://rawgit.com/tallesl/Rich-Hickey-fanclub/master/lisps/Lisplets/landpage/lisplets.sourceforge.net.html), [source](Lisplets/source))
